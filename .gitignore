@@ -1,0 +1,23 @@
+# Build artifacts
+/build/
+CMakeFiles/
+CMakeCache.txt
+*.dir/
+*.obj
+*.o
+*.pdb
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+compile_commands.json
+
+# VS Code
+.vscode/ipch
+.cache/
+
+# OS junk
+.DS_Store
+Thumbs.db

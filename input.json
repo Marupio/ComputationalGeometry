@@ -1,0 +1,15 @@
+{
+    "Logger": {
+        "Level": "Debug2",
+        "CheckIndents": true,
+        "Output": "C:/Users/daveg/OneDrive/Documents/Projects/Sandbox/output",
+        "Filter": {
+            "Exclude": [],
+            "Comment_Exclude": [
+                "debugShowAllTabs",
+                "getValue", "setValue",
+                "LockTracker", "lockReadOnly", "lockWriteable"
+            ]
+        }
+    }
+}

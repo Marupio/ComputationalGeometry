@@ -1,0 +1,58 @@
+PS C:\Users\daveg\OneDrive\Documents\Projects\ComputationalGeometry\build\msvc\Debug> ./sandbox.exe ..\..\..\tests\complex_part.csv --merge-points --steps 8 --passes 3 --input ..\..\..\input.json
+[   Info] [0|Logger.cpp:99,setOutputToFile] Debug log opened at 'C:/Users/daveg/OneDrive/Documents/Projects/Sandbox\output-003'
+[   Info] [0|main.cpp:102,main] Reading '..\..\..\tests\complex_part.csv' ...
+[  Debug] [0|Work.cpp:35,readData] First character is not a number, c=70
+[   Info] [0|main.cpp:107,main] Done reading.  Points=26
+[  Debug] [0|Work.cpp:829,report] m_fileName = ..\..\..\tests\complex_part.csv
+m_faceNumber.size = 26
+m_points.size = 26
+m_normals.size = 26
+0:1 | (-5.16024,2.82572,-9.34249) | (0.596225,0,-0.802817)
+1:2 | (-4.41133,3.02825,-9.27683) | (-0.76545,-0.301538,-0.568473)
+2:3 | (-4.34044,2.63225,-5.01799) | (0.76545,0.301538,0.568473)
+3:4 | (-4.33542,4.23747,-5.14093) | (-0.596225,0,0.802817)
+4:5 | (-3.29187,5.12463,-6.73043) | (0.596225,0,-0.802817)
+5:6 | (-2.63488,3.82041,-7.46773) | (0.76545,0.301538,0.568473)
+6:7 | (-7.56218,3.888,-6.67175) | (-0.596225,0,0.802817)
+7:8 | (-7.35122,4.09053,-5.88173) | (-0.76545,-0.301538,-0.568473)
+8:9 | (-6.0154,2.29969,-6.13525) | (-0.596225,0,0.802817)
+9:10 | (-5.40085,2.06193,-8.61337) | (0.24208,-0.953454,0.179784)
+10:11 | (-4.06172,7.0993,-6.74126) | (-0.24208,0.953454,-0.179784)
+11:12 | (-6.95875,2.36917,-8.45089) | (-0.76545,-0.301538,-0.568473)
+12:13 | (-5.9918,3.10445,-5.11703) | (0.24208,-0.953454,0.179784)
+13:14 | (-6.71978,4.71398,-4.99055) | (-0.596225,0,0.802817)
+14:15 | (-5.15773,4.90366,-8.43282) | (0.596225,0,-0.802817)
+15:16 | (-5.82849,3.48824,-9.38487) | (-0.24208,0.953454,-0.179784)
+16:17 | (-4.52609,1.98752,-7.05592) | (0.596225,0,-0.802817)
+17:18 | (-5.83964,6.16059,-7.50076) | (-0.596225,0,0.802817)
+18:19 | (-4.39364,6.33126,-5.80551) | (-0.24208,0.953454,-0.179784)
+19:20 | (-5.75682,1.4723,-6.04455) | (0.24208,-0.953454,0.179784)
+20:21 | (-3.28813,3.57709,-8.7697) | (0.596225,0,-0.802817)
+21:22 | (-3.18647,4.02037,-5.4699) | (0.76545,0.301538,0.568473)
+22:23 | (-5,3,-7) | (1,0,0)
+23:24 | (-5,3,-7) | (1,0,0)
+24:25 | (-5,3,-7) | (1,0,0)
+25:26 | (-5,3,-7) | (1,0,0)
+
+[   Info] [0|main.cpp:114,main] Merging points with epsilon=1e-09 ...
+[   Info] [0|main.cpp:119,main] Merged 3 duplicates; kept 23 points.
+[   Info] [0|main.cpp:124,main] Calculating axis-aligned bound box...
+[   Info] [0|main.cpp:129,main] Axis-aligned BoundBox = [(-7.56218,1.4723,-9.38487)->(-2.63488,7.0993,-4.99055)]
+[   Info] [0|main.cpp:132,main] Calculating 3D convex hull vertices...
+)10,10):
+[   Info] [0|main.cpp:141,main] Solving rotated OBB with steps=8, passes=3 ...
+[  Debug] [0|Work.cpp:683,calculateRotatedBoundBox] pass 0, theta=(0,1.5708, phi=(0,1.5708)
+[  Debug] [0|Work.cpp:683,calculateRotatedBoundBox] pass 1, theta=(0.19635,0.589049, phi=(0.19635,0.589049)
+[  Debug] [0|Work.cpp:683,calculateRotatedBoundBox] pass 2, theta=(0.392699,0.490874, phi=(0.343612,0.441786)
+[   Info] [0|main.cpp:164,main] Done calculations:
+  Total points: 26
+  Merged: 3; Kept: 23
+  Convex hull size: 21
+  Final solver result :
+      Solver success = 1
+      BoundBox       = [(-5.62439,4.73712,-8.24956)->(-1.65393,8.59901,-3.27858)]
+      Axes           = {(0.530105,-0.782712,-0.326114),(0.189717,0.484333,-0.854066),(0.826436,0.390875,0.405241)}
+      Rotation       = (0.441786,0.417243,1.93555)
+
+
+Done.
