@@ -315,8 +315,7 @@ int gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>& 
         // 1) Mark all faces visible from perspectivePoint
         std::vector<int> visible;
         visible.reserve(16);
-        int nFaces = static_cast<int>(faces.size());
-        for (int i = 0; i < nFaces; ++i) {
+        for (int i = 0; i < faces.size(); ++i) {
             if (faces[i].alive()) {
                 if (faces[i].visibleFrom(P[perspectivePoint], eps)) {
                     faces[i].alive() = false;
@@ -361,8 +360,8 @@ int gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>& 
                 continue;
             }
             faces.push_back(nf);
-            int nFaces = static_cast<int>(faces.size());
-            newFaces.push_back(nFaces - 1);
+            int newIndex = static_cast<int>(faces.size()) - 1;
+            newFaces.push_back(newIndex);
         }
 
         // 4) Reassign outside points that belonged to removed faces (exclude perspectivePoint)
