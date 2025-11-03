@@ -1,5 +1,7 @@
 # Sandbox — 3D Minimum Bounding Box Solver (C++ / CMake / VS Code)
 
+** Note ** This project was thrown together very quickly.  It is in need of a refactor, especially the 'Work' class.  I intend to do just that.  I am also considering porting this code to *C#* for simplicity.
+
 This project computes the **minimum-volume oriented bounding box (OBB)** of a set of 3D points using convex hull reduction and a rotating-calipers algorithm, with optional point merging.
 Originally written as a rapid prototype to demonstrate a complete geometric solution — from CSV import to full 3D bounding box optimisation.
 
@@ -55,3 +57,4 @@ Given a CSV file of 3D points and normals:
 
 ```bash
 sandbox.exe [logger options] [--epsilon <double>] [--steps <int>] [--passes <int>] [--merge-points] <filePath>
+
