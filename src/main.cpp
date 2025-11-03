@@ -130,12 +130,16 @@ int main(int argc, char** argv)
 
     // 6) Convex hull 3D (optional speed-up)
     Log_Info("Calculating 3D convex hull vertices...");
-    const bool haveHull = work.calculateConvexHull3dVertexIndices(*activePoints);
-    if (!haveHull) {
-        Log_Warn("No valid convex hull (or degenerate). Proceeding with full point set.");
+    const int hullDims = work.calculateConvexHull3dVertexIndices(*activePoints);
+    bool validHull = hullDims == 3;
+    if (!validHull) {
+        Log_Warn(""
+            << "Convex hull does not form a valid volume.  Topological dimensions = " << hullDims
+            << ", proceeding with full point set."
+        );
     }
     const std::vector<Vector3>& principal =
-        haveHull ? work.convexHull3dPoints() : *activePoints;
+        validHull ? work.convexHull3dPoints() : *activePoints;
 
     // 7) Rotated OBB: use steps/passes from CLI
     Log_Info("Solving rotated OBB with steps=" << opt.steps << ", passes=" << opt.passes << " ...");
@@ -154,8 +158,12 @@ int main(int argc, char** argv)
     Log_Info(""
         << "Done calculations:\n"
         << "  Total points: " << work.points().size() << "\n"
-        << "  Merged: " << nMerged << "; Kept: " << (opt.mergePoints ? work.mergedPoints().size() : work.points().size()) << "\n"
-        << "  Convex hull size: " << (haveHull ? work.convexHull3dPoints().size() : principal.size()) << "\n"
+        << "  Merged: " << nMerged << "; Kept: "
+            << (opt.mergePoints ? work.mergedPoints().size() : work.points().size()) << "\n"
+        << "  Convex hull:\n"
+        << "      Dimensions: " << hullDims << "\n"
+        << "      Size: "
+            << (validHull ? work.convexHull3dPoints().size() : principal.size()) << "\n"
         << "  Final solver result :\n"
         << "      Solver success = " << result << "\n"
         << "      BoundBox       = " << resultBb << "\n"

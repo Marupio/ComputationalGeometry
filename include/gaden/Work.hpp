@@ -73,8 +73,9 @@ public:
     bool calculateAxisAlignedBoundBox(const std::vector<Vector3>& pts);
 
     // Calculates which vertices belong in the convex hull, fills m_convexHullIndices
-    // Returns false if not enough or degerate
-    bool calculateConvexHull3dVertexIndices(const std::vector<Vector3>& pts, double eps = 1e-9);
+    // Returns number of valid topological dimensions carved out by the hull, -1 for insufficient
+    // points
+    int calculateConvexHull3dVertexIndices(const std::vector<Vector3>& pts, double eps = 1e-9);
 
     // Calculates 2d convex hull from projection of 3d points, given theta (heading) & phi
     //  (declination), returns false if too few points or degenerate

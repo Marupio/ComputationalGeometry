@@ -93,7 +93,7 @@ bool gaden::Work::calculateAxisAlignedBoundBox(const std::vector<Vector3>& pts) 
 }
 
 
-bool gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>& pts, double eps)
+int gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>& pts, double eps)
 {
     // Allias for readability
     const std::vector<Vector3>& P = pts;
@@ -102,52 +102,65 @@ bool gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>&
     std::vector<int>& out = m_convexHullIndices;
     out.clear();
     if (n == 0) {
-        return false;
+        // No points => no hull
+        return -1;
     }
     if (n <= 3) {
+        // 1–3 points: hull is the set itself (degenerate)
         out.resize(n);
         std::iota(out.begin(), out.end(), 0);
-        return false;
+        return -1;
     }
 
-    // *** Build initial simplex (p0, p1, p2, p3)
+    // *** Build initial simplex (tet), choose (p0, p1, p2, p3)
     int p0 = 0;
-    // Find leftmost vertex, linear search
-    for (int i = 1; i < n; ++i)
-        if (P[i].x() < P[p0].x()) p0 = i;
+    // Find leftmost vertex, linear search, ignore ties
+    for (int i = 1; i < n; ++i) {
+        if (P[i].x() < P[p0].x()) {
+            p0 = i;
+        }
+    }
 
+    // p1: farthest from p0 (by squared distance)
     int p1 = p0;
     double best = -1.0;
     for (int i = 0; i < n; ++i) {
+        // ||P[i] - P[p0]||^2
         const Vector3 d = P[i] - P[p0];
         const double d2 = d.magSqr();
+
         if (d2 > best) {
             best = d2;
             p1 = i;
         }
     }
     if (p1 == p0) {
+        // All points coincide with p0 (completely degenerate)
         out.push_back(p0);
-        return false;
+        return 0;
     }
 
+    // p2: maximises triangle area with (p0,p1) via |(p1-p0) x (P[i]-p0)|^2
     int p2 = p0; best = -1.0;
     const Vector3 u = P[p1] - P[p0];
     for (int i = 0; i < n; ++i) {
         if (i != p0 && i != p1) {
+            // ||u x w||^2 (proportional to area^2)
             const Vector3 w = P[i] - P[p0];
             const Vector3 cx = u.crossProduct(w);
-            const double a2 = cx.dotProduct(cx); // ||u x w||^2
+            const double a2 = cx.dotProduct(cx);
+
             if (a2 > best) {
                 best = a2; p2 = i;
             }
         }
     }
     if (p2 == p0 || best <= eps) {
-        // Nearly colinear: return extremes along u
+        // Points nearly colinear: return extreme endpoints along u (line hull)
         int lo = 0, hi = 0;
         double loP = (P[0] - P[p0]).dotProduct(u), hiP = loP;
         for (int i = 1; i < n; ++i) {
+            // scalar projection on u
             const double pr = (P[i] - P[p0]).dotProduct(u);
             if (pr < loP) {
                 loP = pr;
@@ -159,18 +172,23 @@ bool gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>&
             }
         }
         if (lo == hi) {
+            // not even a line, this is a single unique point
             out = { lo };
-        } else {
-            out = { lo, hi };
+            return 0;
         }
+        // the 'hull' is a line - two endpoints define the line hull
+        out = { lo, hi };
         std::sort(out.begin(), out.end());
-        return true;
+        return 1;
     }
 
+    // Seed face from (p0,p1,p2); computes plane normal/offset, orientation, etc.
     Face seed(static_cast<int>(p0), static_cast<int>(p1), static_cast<int>(p2), P, eps);
 
+    // p3: farthest (by |signed distance|) from the seed plane => maximises tet volume
     int p3 = p0; best = -1.0;
     for (int i = 0; i < n; ++i) if (i != p0 && i != p1 && i != p2) {
+        // |n·p + d|
         const double sd = std::fabs(seed.signedDistance(P[i]));
         if (sd > best) {
             best = sd;
@@ -178,17 +196,26 @@ bool gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>&
         }
     }
     if (p3 == p0 || best <= eps) {
-        // Coplanar-ish: safe superset via directional extremes
+        // Points are coplanar(-ish). Build a safe superset of potential hull vertices by
+        // taking extrema in a few independent directions (normal, two tangents, and an edge).
         out = { p0, p1, p2 };
-        // std::vector<int> idx = { p0, p1, p2 };
+
+        // plane normal
         const Vector3 nrm = seed.normal();
+
+        // tangent direction 1
         const Vector3 n01 = u.crossProduct(nrm);
+
+        // tangent direction 2
         const Vector3 n02 = (P[p2] - P[p0]).crossProduct(nrm);
+
         const Vector3 dirs[4] = { nrm, n01, n02, (P[p2] - P[p1]) };
         for (const Vector3& d : dirs) {
-            if (d.dotProduct(d) <= eps) {
+            if (d.magSqr() <= eps*eps) {
+                // skip near-zero directions
                 continue;
             }
+            // Find extremes along d across all points; add both indices
             int lo = 0, hi = 0;
             double loP = P[0].dotProduct(d), hiP = loP;
             for (int i = 1; i < n; ++i) {
@@ -205,17 +232,19 @@ bool gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>&
             out.push_back(lo);
             out.push_back(hi);
         }
+        // Unique-sort to remove duplicates; caller may further process this coplanar set
         std::sort(out.begin(), out.end());
         out.erase(std::unique(out.begin(), out.end()), out.end());
-        return true;
+        return 2;
     }
 
     // Ensure seed faces point outward (p3 is inside side)
     if (seed.visibleFrom(P[p3], 0.0)) {
+        // If p3 sees the seed as front-facing, flip winding to make it outward
         seed = Face(static_cast<int>(p0), static_cast<int>(p2), static_cast<int>(p1), P, eps);
     }
 
-    // Initial tetrahedron faces, CCW as seen from outside
+    // Initial tet faces, CCW as seen from outside
     std::vector<Face> faces;
     faces.reserve(32);
     faces.emplace_back(static_cast<int>(p0), static_cast<int>(p1), static_cast<int>(p2), P, eps);
@@ -226,11 +255,15 @@ bool gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>&
     // Assign outside sets
     for (int i = 0; i < n; ++i) {
         if (i == p0 || i == p1 || i == p2 || i == p3) {
+            // skip tet vertices
             continue;
         }
+        // tolerance to ignore near-boundary points (i.e. <= eps)
         double bestDist = eps;
         int bestFace = -1;
-        for (int f = 0; f < (int)faces.size(); ++f) if (faces[f].alive()) {
+        int nFaces = static_cast<int>(faces.size());
+        for (int f = 0; f < nFaces; ++f) if (faces[f].alive()) {
+            // positive means in front/outside
             const double sd = faces[f].signedDistance(P[i]);
             if (sd > bestDist) {
                 bestDist = sd;
@@ -238,19 +271,20 @@ bool gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>&
             }
         }
         if (bestFace >= 0) {
-            faces[bestFace].outside().push_back((int)i);
+            faces[bestFace].outside().push_back(i);
         }
     }
 
-    // *** Quickhull main loop
+    // *** Quickhull main loop - incremental: iteratively add points & retriangulate
     while (true) {
         // Pick a face that still has outside points (greedy: largest far distance)
         int fIdx = -1; double fMax = -1.0;
-        for (int f = 0; f < (int)faces.size(); ++f) {
+        int nFaces = static_cast<int>(faces.size());
+        for (int f = 0; f < nFaces; ++f) {
             if (faces[f].alive() && !faces[f].outside().empty()) {
                 double localMax = -1.0;
                 for (int idx : faces[f].outside()) {
-                    const double sd = faces[f].signedDistance(P[(int)idx]);
+                    const double sd = faces[f].signedDistance(P[idx]);
                     if (sd > localMax) {
                         localMax = sd;
                     }
@@ -262,32 +296,37 @@ bool gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>&
             }
         }
         if (fIdx < 0) {
+            // No faces with outside points remain => hull complete
             break;
         }
 
-        // Farthest viewer (point) from that face
+        // perspectivePoint is farthest view (point) from that face
         Face& f = faces[fIdx];
-        int eye = f.outside().front();
+        int perspectivePoint = f.outside().front();
         double farBest = -1.0;
         for (int idx : f.outside()) {
-            const double sd = f.signedDistance(P[(int)idx]);
+            const double sd = f.signedDistance(P[idx]);
             if (sd > farBest) {
                 farBest = sd;
-                eye = idx;
+                perspectivePoint = idx;
             }
         }
 
-        // 1) Mark all faces visible from viewer
+        // 1) Mark all faces visible from perspectivePoint
         std::vector<int> visible;
         visible.reserve(16);
-        for (int i = 0; i < (int)faces.size(); ++i) if (faces[i].alive()) {
-            if (faces[i].visibleFrom(P[(int)eye], eps)) {
-                faces[i].alive() = false;
-                visible.push_back(i);
+        int nFaces = static_cast<int>(faces.size());
+        for (int i = 0; i < nFaces; ++i) {
+            if (faces[i].alive()) {
+                if (faces[i].visibleFrom(P[perspectivePoint], eps)) {
+                    faces[i].alive() = false;
+                    visible.push_back(i);
+                }
             }
         }
 
-        // 2) Build the horizon as directed edges that appear once among visible faces
+        // 2) Build the horizon: directed edges that appear exactly once among visible faces
+        //    (edges bordering the "hole" after removing visible faces)
         std::unordered_map<Edge, int, EdgeHash> count;
         for (int vi : visible) {
             const Face& vf = faces[vi];
@@ -301,43 +340,51 @@ bool gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>&
         for (const auto& kv : count) {
             const Edge& e = kv.first;
             const int c_uv = kv.second;
+
+            // reverse-directed edge
             const auto it = count.find(Edge(e.v(), e.u()));
             const int c_vu = (it == count.end()) ? 0 : it->second;
             if (c_uv == 1 && c_vu == 0) {
+                // Edge used once in forward direction and never in reverse => boundary edge
                 horizon.push_back(e);
             }
         }
 
-        // 3) Stitch new faces from horizon to eye
+        // 3) Stitch new faces from horizon to perspectivePoint (maintain outward orientation)
         std::vector<int> newFaces;
         newFaces.reserve(horizon.size());
         for (const Edge& e : horizon) {
-            Face nf(e.u(), e.v(), eye, P, eps);
+            // triangle (u -> v -> perspectivePoint)
+            Face nf(e.u(), e.v(), perspectivePoint, P, eps);
             if (!nf.alive()) {
+                // skip degenerate tris
                 continue;
             }
             faces.push_back(nf);
-            newFaces.push_back((int)faces.size() - 1);
+            int nFaces = static_cast<int>(faces.size());
+            newFaces.push_back(nFaces - 1);
         }
 
-        // 4) Reassign outside points from removed faces (except viewer)
+        // 4) Reassign outside points that belonged to removed faces (exclude perspectivePoint)
         std::vector<int> pool;
         for (int vi : visible) {
             for (int idx : faces[vi].outside()) {
-                if (idx != eye) {
+                if (idx != perspectivePoint) {
                     pool.push_back(idx);
                 }
             }
             faces[vi].outside().clear();
         }
+        // Deduplicate pool to avoid repeated tests
         std::sort(pool.begin(), pool.end());
         pool.erase(std::unique(pool.begin(), pool.end()), pool.end());
 
+        // Re-bin pooled points to the newly created faces (only if strictly outside)
         for (int idx : pool) {
             double bestD = eps;
             int bf = -1;
             for (int nf : newFaces) if (faces[nf].alive()) {
-                const double sd = faces[nf].signedDistance(P[(int)idx]);
+                const double sd = faces[nf].signedDistance(P[idx]);
                 if (sd > bestD) {
                     bestD = sd;
                     bf = nf;
@@ -350,21 +397,25 @@ bool gaden::Work::calculateConvexHull3dVertexIndices(const std::vector<Vector3>&
     }
 
     // *** Collect unique vertex indices
+    // Here we throw away the hull, keeping only the points.
+    // TODO - make this function actually return a convexHull3d and caller can discard
     std::unordered_set<int> verts;
     for (const Face& f : faces) if (f.alive()) {
-        verts.insert((int)f.a());
-        verts.insert((int)f.b());
-        verts.insert((int)f.c());
+        verts.insert(f.a());
+        verts.insert(f.b());
+        verts.insert(f.c());
     }
     out.assign(verts.begin(), verts.end());
     std::sort(out.begin(), out.end());
+
+    // Cache actual hull points (for downstream steps)
     int nPts = out.size();
     m_convexHull3dPoints.clear();
     m_convexHull3dPoints.reserve(nPts);
     for (int i : out) {
         m_convexHull3dPoints.push_back(pts[i]);
     }
-    return true;
+    return 3;
 }
 
 
@@ -396,10 +447,10 @@ bool gaden::Work::calculateConvexHull2dVertexIndices(
     v.normalise();
 
     // 2) Project all points into (u,v) coordinates
-    const int n = (int)pts.size();
+    const int nPts = static_cast<int>(pts.size());
     std::vector<Vector2> P2;
-    P2.reserve(n);
-    for (int i = 0; i < n; ++i) {
+    P2.reserve(nPts);
+    for (int i = 0; i < nPts; ++i) {
         const Vector3& p = pts[i];
         const double x = p.dotProduct(u);
         const double y = p.dotProduct(v);
@@ -408,8 +459,8 @@ bool gaden::Work::calculateConvexHull2dVertexIndices(
 
     // Degenerate cases
     m_convexHull2dIndices.clear();
-    if (n <= 1) {
-        if (n == 1) {
+    if (nPts <= 1) {
+        if (nPts == 1) {
             m_convexHull2dIndices.push_back(0);
         }
         return false;
@@ -421,16 +472,17 @@ bool gaden::Work::calculateConvexHull2dVertexIndices(
     // Remove duplicates if any
     std::vector<Vector2> A;
     A.reserve(P2.size());
-    for (int i = 0; i < (int)P2.size(); ++i) {
+    int nP2 = static_cast<int>(P2.size());
+    for (int i = 0; i < nP2; ++i) {
         if (i == 0 || P2[i].x() != P2[i-1].x() || P2[i].y() != P2[i-1].y()) {
             A.push_back(P2[i]);
         }
     }
-    if ((int)A.size() == 1) {
+    if (A.size() == 1) {
         m_convexHull2dIndices.push_back(A[0].idx());
         return false;
     }
-    if ((int)A.size() == 2) {
+    if (A.size() == 2) {
         m_convexHull2dIndices.push_back(A[0].idx());
         m_convexHull2dIndices.push_back(A[1].idx());
         return false;
@@ -438,11 +490,12 @@ bool gaden::Work::calculateConvexHull2dVertexIndices(
 
     // Lower hull
     std::vector<Vector2> H;
-    H.reserve(A.size()*2);
-    for (int i = 0; i < (int)A.size(); ++i) {
-        while ((int)H.size() >= 2) {
-            const Vector2 a = H[(int)H.size()-2];
-            const Vector2 b = H[(int)H.size()-1];
+    int nA = static_cast<int>(A.size());
+    H.reserve(nA*2);
+    for (int i = 0; i < nA; ++i) {
+        while (H.size() >= 2) {
+            const Vector2 a = H[H.size()-2];
+            const Vector2 b = H[H.size()-1];
             const Vector2 c = A[i];
             const Vector2 ab = b - a;
             const Vector2 ac = c - a;
@@ -457,11 +510,11 @@ bool gaden::Work::calculateConvexHull2dVertexIndices(
     }
 
     // Upper hull
-    const int lowerSize = (int)H.size();
-    for (int i = (int)A.size()-2; i >= 0; --i) {
-        while ((int)H.size() > lowerSize) {
-            const Vector2 a = H[(int)H.size()-2];
-            const Vector2 b = H[(int)H.size()-1];
+    const int lowerSize = static_cast<int>(H.size());
+    for (int i = A.size()-2; i >= 0; --i) {
+        while (H.size() > lowerSize) {
+            const Vector2 a = H[H.size()-2];
+            const Vector2 b = H[H.size()-1];
             const Vector2 c = A[i];
             const Vector2 ab = b - a;
             const Vector2 ac = c - a;
@@ -479,7 +532,8 @@ bool gaden::Work::calculateConvexHull2dVertexIndices(
 
     // 4) Convert back to original indices (CCW polygon)
     m_convexHull2dIndices.reserve(H.size());
-    for (int i = 0; i < (int)H.size(); ++i) {
+    int nH = static_cast<int>(H.size());
+    for (int i = 0; i < nH; ++i) {
         m_convexHull2dIndices.push_back(H[i].idx());
     }
     return true;
@@ -493,7 +547,7 @@ bool gaden::Work::solvePsiOnProjectedHull(
 ) {
     MinRect& mr(m_optimalRect);
     mr.clear();
-    const int m = (int)m_convexHull2dIndices.size();
+    const int m = static_cast<int>(m_convexHull2dIndices.size());
     if (m <= 0) {
         return false;
     }
