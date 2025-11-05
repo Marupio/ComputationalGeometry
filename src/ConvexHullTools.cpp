@@ -355,8 +355,6 @@ int gaden::ConvexHullTools::calculateConvexHull2d(
         return -1;
     }
 
-    // Alias
-    const Vector2Field& ptsIn(ptsIn);
     if (ptsIn.size() == 1) {
         verticesOut.push_back(ptsIn[0].idx());
         return 0;
@@ -368,54 +366,54 @@ int gaden::ConvexHullTools::calculateConvexHull2d(
     }
 
     // Lower hull
-    std::vector<Vector2> H;
+    ptsOut.clear();
     int nA = static_cast<int>(ptsIn.size());
-    H.reserve(nA*2);
+    ptsOut.reserve(nA*2);
     for (int i = 0; i < nA; ++i) {
-        while (H.size() >= 2) {
-            const Vector2 a = H[H.size()-2];
-            const Vector2 b = H[H.size()-1];
+        while (ptsOut.size() >= 2) {
+            const Vector2 a = ptsOut[ptsOut.size()-2];
+            const Vector2 b = ptsOut[ptsOut.size()-1];
             const Vector2 c = ptsIn[i];
             const Vector2 ab = b - a;
             const Vector2 ac = c - a;
             if (ab.crossProduct(ac) <= 0.0) {
                 // keep CCW turns; collinear -> pop to keep outermost
-                H.pop_back();
+                ptsOut.pop_back();
             } else {
                 break;
             }
         }
-        H.push_back(ptsIn[i]);
+        ptsOut.push_back(ptsIn[i]);
     }
 
     // Upper hull
-    const int lowerSize = static_cast<int>(H.size());
+    const int lowerSize = static_cast<int>(ptsOut.size());
     for (int i = ptsIn.size()-2; i >= 0; --i) {
-        while (H.size() > lowerSize) {
-            const Vector2 a = H[H.size()-2];
-            const Vector2 b = H[H.size()-1];
+        while (ptsOut.size() > lowerSize) {
+            const Vector2 a = ptsOut[ptsOut.size()-2];
+            const Vector2 b = ptsOut[ptsOut.size()-1];
             const Vector2 c = ptsIn[i];
             const Vector2 ab = b - a;
             const Vector2 ac = c - a;
             if (ab.crossProduct(ac) <= 0.0) {
-                H.pop_back();
+                ptsOut.pop_back();
             } else {
                 break;
             }
         }
-        H.push_back(ptsIn[i]);
+        ptsOut.push_back(ptsIn[i]);
     }
 
     // Last point equals first; remove it
-    if (!H.empty()) {
-        H.pop_back();
+    if (!ptsOut.empty()) {
+        ptsOut.pop_back();
     }
 
     // Convert back to original indices (CCW polygon)
-    verticesOut.reserve(H.size());
-    int nH = static_cast<int>(H.size());
-    for (int i = 0; i < nH; ++i) {
-        verticesOut.push_back(H[i].idx());
+    verticesOut.reserve(ptsOut.size());
+    int nptsOut = static_cast<int>(ptsOut.size());
+    for (int i = 0; i < nptsOut; ++i) {
+        verticesOut.push_back(ptsOut[i].idx());
     }
     return 2;
 }

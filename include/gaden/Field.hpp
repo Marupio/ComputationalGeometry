@@ -113,12 +113,11 @@ public:
     void pop_back() { m_vec.pop_back(); }
     void resize(size_type n) { m_vec.resize(n); }
     void resize(size_type n, const Type& v) { m_vec.resize(n, v); }
-    void assign(size_type n, const Type& v) { m_vec.assign(n, v); }
     void swap(Field& other) noexcept { m_vec.swap(other.m_vec); }
 
     // Insert operations
     iterator insert(const_iterator pos, const Vector3& value) {
-        return m_data.insert(pos, value);
+        return m_vec.insert(pos, value);
     }
     iterator insert(const_iterator pos, Vector3&& value) {
         return m_vec.insert(pos, std::move(value));

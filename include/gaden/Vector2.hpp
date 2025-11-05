@@ -107,23 +107,6 @@ public:
         return Vector2(m_x/scalar, m_y/scalar, m_idx);
     }
 
-    Vector2 operator+(const Vector2& rhs) const {
-        return Vector2(m_x + rhs.m_x, m_y + rhs.m_y, m_idx);
-    }
-
-    Vector2 operator-(const Vector2& rhs) const {
-        return Vector2(m_x - rhs.m_x, m_y - rhs.m_y, m_idx);
-    }
-
-    Vector2 operator*(double scalar) const {
-        return Vector2(m_x*scalar, m_y*scalar, m_idx);
-    }
-
-    Vector2 operator/(double scalar) const {
-        double invScalar = 1.0/scalar;
-        return Vector2(m_x*invScalar, m_y*invScalar, m_idx);
-    }
-
     // Precedence for convex hull algorithms
     // TODO - Remove if this becomes part of a larger library, easy to confuse
     bool operator<(const Vector2& rhs) const {

@@ -108,7 +108,6 @@ public:
     void pop_back() { m_vec.pop_back(); }
     void resize(size_type n) { m_vec.resize(n); }
     void resize(size_type n, const Vector2& v) { m_vec.resize(n, v); }
-    void assign(size_type n, const Vector2& v) { m_vec.assign(n, v); }
     void swap(Vector2Field& other) noexcept { m_vec.swap(other.m_vec); }
 
     // Insert operations
@@ -420,7 +419,6 @@ public:
 
     // Read all elements at once
     void read(std::istream& is) {
-        char c = ',';
         std::string line;
         while (std::getline(is, line)) {
             std::istringstream lineIss(line);

@@ -68,7 +68,6 @@ add_executable(sandbox
     src/main.cpp
     src/PointCloudTools.cpp
     src/Tools.cpp
-    src/Work.cpp
 )
 
 # Headers (public include path)

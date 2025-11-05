@@ -10,8 +10,7 @@
 #include "gaden/Logger.hpp"
 #include "gaden/LoggerConfigurator.hpp"
 #include "gaden/version.hpp"
-#include "gaden/Work.hpp"
-#include "gaden/GenericField.hpp"
+#include "gaden/Field.hpp"
 
 using namespace gaden;
 
@@ -103,6 +102,12 @@ int main(int argc, char** argv)
 
 
     // 3) Input
+    std::cout << "\nDone.\n";
+    return 0;
+}
+
+#if 0
+
     gaden::Work work(opt.filePath);
     Log_Info("Reading '" << opt.filePath << "' ...");
     if (!work.readData()) {
@@ -176,6 +181,5 @@ int main(int argc, char** argv)
         << "      Rotation       = " << resultRotations << "\n"
     );
 
-    std::cout << "\nDone.\n";
-    return 0;
-}
+
+#endif
