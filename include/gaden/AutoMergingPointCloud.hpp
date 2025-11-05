@@ -4,26 +4,28 @@
 #include <unordered_map>
 
 #include "gaden/Vector3.hpp"
+#include "gaden/Vector3Field.hpp"
+#include "gaden/Field.hpp"
 
 namespace gaden {
 
-class AutoMergingPointsArray {
+class AutoMergingPointCloud {
 
     // Private data
 
-        static const std::vector<int> m_empty;
+        static const IntField m_empty;
 
         // Indexed together
 
             // Underlying pointList
             // autoPtr<DynamicList<point>> pointsPtr_;
-            std::vector<Vector3> m_points;
+            Vector3Field m_points;
 
             // Associated squared distance
-            std::vector<double> m_magSqrDist;
+            ScalarField m_magSqrDist;
 
             // Associated scaled squared tolerance
-            std::vector<double> m_scaledTolSqr;
+            ScalarField m_scaledTolSqr;
 
 
         // Break up magSqrDist list into buckets with half-tolerance width based on scaled tolerance
@@ -32,7 +34,7 @@ class AutoMergingPointsArray {
         //      * candidateIndices = msdBucketIndices_[bucketIndex]
 
         // HashTable<DynamicList<label>, label> msdBucketIndices_;
-        std::unordered_map<int, std::vector<int>> m_msdBucketIndices;
+        std::unordered_map<int, IntField> m_msdBucketIndices;
 
         // Merge tolerance
         const double m_mergeTol;
@@ -50,7 +52,7 @@ class AutoMergingPointsArray {
 
         //- Get list of candidate indices for a given bucketIndex
         //  Returns empty list if not found
-        inline const std::vector<int>& getCandidateIndicies(int bucketIndex) const
+        inline const IntField& getCandidateIndicies(int bucketIndex) const
         {
             const auto iter = m_msdBucketIndices.find(bucketIndex);
             if (iter == m_msdBucketIndices.cend())
@@ -68,14 +70,14 @@ public:
     // Constructors
 
         //- Construct given input components
-        AutoMergingPointsArray(int estimatedSize, double mergeTol);
+        AutoMergingPointCloud(int estimatedSize, double mergeTol, std::string name="");
 
         // //- Copy constructor
-        // AutoMergingPointsArray(const AutoMergingPointsArray&);
+        // AutoMergingPointCloud(const AutoMergingPointCloud&);
 
 
     //- Destructor
-    ~AutoMergingPointsArray() = default;
+    ~AutoMergingPointCloud() = default;
 
 
     // Member Functions
@@ -84,7 +86,7 @@ public:
 
             //- Return underlying points
             //  Non-const access achieved through transfer()
-            inline const std::vector<Vector3>& points() const
+            inline const Vector3Field& points() const
             {
                 return m_points;
             }
@@ -108,14 +110,18 @@ public:
             //  Returns point index after merging
             int append(const Vector3&);
 
-            //- Transfer underlying points to caller, reset this object
-            inline std::vector<Vector3>&& transfer()
-            {
+
+            // Hand over ownership of data, invalidates in-class data
+            Vector3Field transfer() && noexcept {
+                // tidy up related caches
                 m_magSqrDist.clear();
                 m_scaledTolSqr.clear();
-                return std::move(m_points);
+                // move out the payload, leave this empty
+                return std::exchange(m_points, {});
             }
 
+            // Safety - forbid transfer() on lvalues
+            Vector3Field transfer() & = delete;
 };
 
 } // end namespace gaden

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <sstream>
 
 #include "gaden/Constants.hpp"
 
@@ -20,6 +21,9 @@ public:
         m_y(0.0),
         m_z(0.0)
     {}
+    Vector3(std::istream& is) {
+        fromCsv(is);
+    }
 
     double x() const { return m_x; }
     double& x() { return m_x; }
@@ -118,15 +122,30 @@ public:
         return m_x*rhs.m_x + m_y*rhs.m_y + m_z*rhs.m_z;
     }
 
-    // *** Stream
+
+    // *** I/O
+
+    // Csv format has no parentheses
+    std::string toCsv() const {
+        std::ostringstream oss;
+        oss << m_x << "," << m_y << "," << m_z;
+        return oss.str();
+    }
+
+    // Csv format has no parentheses
+    void fromCsv(std::istream& is) {
+        char comma;
+        is >> m_x >> comma >> m_y >> comma >> m_z;
+    }
 
     friend std::ostream& operator<<(std::ostream& os, const Vector3& c) {
         return os << "(" << c.m_x << "," << c.m_y<< "," << c.m_z << ")";
     }
 
     friend std::istream& operator>>(std::istream& is, Vector3& c) {
-        char comma;
-        return (is >> c.m_x >> comma >> c.m_y >> comma >> c.m_z);
+        // char comma;
+        char lparen, comma, rparen;
+        return (is >> lparen >> c.m_x >> comma >> c.m_y >> comma >> c.m_z >> rparen);
     }
 };
 

@@ -59,11 +59,14 @@ endif(Logs)
 
 # Sources
 add_executable(sandbox
-    src/main.cpp
+    src/AutoMergingPointCloud.cpp
     src/base.cpp
+    src/BoundBox.cpp
+    src/ConvexHullTools.cpp
     src/Logger.cpp
     src/LoggerConfigurator.cpp
-    src/AutoMergingPointsArray.cpp
+    src/main.cpp
+    src/PointCloudTools.cpp
     src/Tools.cpp
     src/Work.cpp
 )

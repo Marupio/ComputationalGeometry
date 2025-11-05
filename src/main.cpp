@@ -11,6 +11,7 @@
 #include "gaden/LoggerConfigurator.hpp"
 #include "gaden/version.hpp"
 #include "gaden/Work.hpp"
+#include "gaden/GenericField.hpp"
 
 using namespace gaden;
 
@@ -96,6 +97,10 @@ int main(int argc, char** argv)
             << "[--merge-points] filePath\n";
         return 1;
     }
+
+    Field<int> intField(3, 0);
+    std::cout << "intField = " << intField << ", magSqr=" << intField.magSqr() << std::endl;
+
 
     // 3) Input
     gaden::Work work(opt.filePath);

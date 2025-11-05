@@ -4,6 +4,7 @@
 
 #include "gaden/Constants.hpp"
 #include "gaden/Vector3.hpp"
+#include "gaden/Vector3Field.hpp"
 
 namespace gaden {
 
@@ -31,7 +32,7 @@ public:
     Face() {};
 
     // Construct from components and reference to point list
-    Face(int a, int b, int c, const std::vector<Vector3>& pts, double eps):
+    Face(int a, int b, int c, const Vector3Field& pts, double eps):
         m_ptA(a),
         m_ptB(b),
         m_ptC(c),

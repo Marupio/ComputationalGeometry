@@ -12,7 +12,7 @@
 #include "gaden/Edge.hpp"
 #include "gaden/Face.hpp"
 #include "gaden/Logger.hpp"
-#include "gaden/AutoMergingPointsArray.hpp"
+#include "gaden/AutoMergingPointCloud.hpp"
 #include "gaden/Vector2.hpp"
 #include "gaden/Work.hpp"
 
@@ -43,14 +43,12 @@ bool gaden::Work::readData() {
         char comma;
         lineIss >> comma;
 
-        Vector3 position;
-        lineIss >> position;
+        Vector3 position(lineIss);
         m_points.push_back(position);
 
         lineIss >> comma;
 
-        Vector3 normal;
-        lineIss >> normal;
+        Vector3 normal(lineIss);
         m_normals.push_back(normal);
     }
 
@@ -74,7 +72,7 @@ int gaden::Work::mergePoints(double epsilon) {
     m_mergedPointsMap.clear();
     m_mergedPointsMap.reserve(reserve);
 
-    AutoMergingPointsArray smp(reserve, epsilon);
+    AutoMergingPointCloud smp(reserve, epsilon);
     for (int i = 0; i < nPoints; ++i) {
         const Vector3& pt(m_points[i]);
         m_mergedPointsMap.push_back(smp.append(pt));

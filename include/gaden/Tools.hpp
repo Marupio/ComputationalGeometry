@@ -18,6 +18,11 @@ class GADEN_API Tools {
 
 public:
 
+    // True if c is a character between 0 .. 9
+    static bool isNumber(char c) {
+        return c <= '9' && c >= '0';
+    }
+
     template <class T>
     struct is_byte_like
     : std::bool_constant<

@@ -110,6 +110,13 @@ public:
         return true;
     }
 
+    // bool solvePsiOnProjectedHull(
+    //     const Vector3& u,
+    //     const Vector3& v,
+    //     const std::vector<Vector3>& pts
+    // );
+
+
     friend std::ostream& operator<<(std::ostream& os, const BoundBox& c) {
         return os << "[" << c.minPt() << "->" << c.maxPt() << "]";
     }
