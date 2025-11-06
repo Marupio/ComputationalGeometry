@@ -13,17 +13,13 @@ class Vector2 {
     // Y coord
     double m_y;
 
-    // Optional index into point list
-    // TODO remove this, put into 'IndexedVector2' class
-    int m_idx;
-
 public:
 
     // Null constructor
-    Vector2() : m_x(0.0), m_y(0.0), m_idx(-1) {}
+    Vector2() : m_x(0.0), m_y(0.0) {}
 
     // Construct from components
-    Vector2(double x, double y, int i=-1) : m_x(x), m_y(y), m_idx(i) {}
+    Vector2(double x, double y) : m_x(x), m_y(y) {}
 
     Vector2(std::istream& is) {
         fromCsv(is);
@@ -34,8 +30,6 @@ public:
     double& x() { return m_x; }
     double y() const { return m_y; }
     double& y() { return m_y; }
-    int idx() const { return m_idx; }
-    int& idx() { return m_idx; }
 
     // Cross product (2D vector math)
     double crossProduct(const Vector2& rhs) const { return m_x*rhs.m_y - m_y*rhs.m_x; }
@@ -100,11 +94,11 @@ public:
     }
 
     Vector2 operator*(double scalar) const {
-        return Vector2(m_x*scalar, m_y*scalar, m_idx);
+        return Vector2(m_x*scalar, m_y*scalar);
     }
 
     Vector2 operator/(double scalar) const {
-        return Vector2(m_x/scalar, m_y/scalar, m_idx);
+        return Vector2(m_x/scalar, m_y/scalar);
     }
 
     // Precedence for convex hull algorithms

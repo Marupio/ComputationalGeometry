@@ -3,13 +3,16 @@
 #include <limits>
 #include <vector>
 
-#include "gaden/Vector2.hpp"
+#include "gaden/IndexedVector2.hpp"
 
 namespace gaden {
 
 struct MinRect {
     // Plain old data container, metadata for rotating calipers algorithm (determines final angle of
     //  rotation, psi)
+
+    // False if valid MinRect value was not found
+    bool m_valid;
 
     // rectangle area
     double m_area;
@@ -37,6 +40,8 @@ public:
 
     // Accessors
 
+    bool valid() const { return m_valid; }
+    bool& valid() { return m_valid; }
     double area() const { return m_area; }
     double& area() { return m_area; }
     double psi() const { return m_psi; }
@@ -51,6 +56,7 @@ public:
     // Functionality
 
     void clear() {
+        m_valid = true;
         m_area = std::numeric_limits<double>::infinity();
         m_psi = 0.0;
         m_width = 0.0;
@@ -61,21 +67,21 @@ public:
     // Calculate axial edges from the i'th edge in a planar polygon, return as output parameters
     static void calculateEdgeFrame(
         // inputs
-        int i, int hullSize, const std::vector<Vector2>& polygon,
+        int i, int hullSize, const std::vector<IndexedVector2>& polygon,
 
         // outputs
-        Vector2& ue, Vector2& ve
+        IndexedVector2& ue, IndexedVector2& ve
     ) {
-        const Vector2 e = polygon[(i+1)%hullSize] - polygon[i];
+        const IndexedVector2 e = polygon[(i+1)%hullSize] - polygon[i];
         double lengthSqr = e.magSqr();
         if (lengthSqr <= 0.0) {
-            ue = Vector2(1.0, 0.0);
-            ve = Vector2(0.0, 1.0);
+            ue = IndexedVector2(1.0, 0.0);
+            ve = IndexedVector2(0.0, 1.0);
             return;
         }
         const double length = std::sqrt(lengthSqr);
-        ue = Vector2(e.x() / length, e.y() / length);
-        ve = Vector2(-ue.y(), ue.x()); // +90 degrees
+        ue = IndexedVector2(e.x() / length, e.y() / length);
+        ve = IndexedVector2(-ue.y(), ue.x()); // +90 degrees
     }
 
 };

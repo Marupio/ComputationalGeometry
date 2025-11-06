@@ -4,26 +4,47 @@
 #include <string>
 #include <vector>
 
-#include "gaden/Axes.hpp"
-#include "gaden/base.hpp"
-#include "gaden/BoundBox.hpp"
+#include "gaden/Surface3.hpp"
+#include "gaden/ConvexHullTools.hpp"
 #include "gaden/Logger.hpp"
 #include "gaden/LoggerConfigurator.hpp"
 #include "gaden/version.hpp"
-#include "gaden/Field.hpp"
 
 using namespace gaden;
 
 namespace { // anonymous namespace for local-only functionality
     struct AppOptions {
         double epsilon = 1.0e-9;
-        int    steps   = 7;
-        int    passes  = 1;
+        bool hasEpsilon = false;
+
+        int steps = 7;
+        bool hasSteps = false;
+
+        int passes = 1;
+        bool hasPasses = false;
 
         // present => true
-        bool   mergePoints = false;
+        bool mergePoints = false;
 
         std::string filePath;
+
+        friend std::ostream& operator<<(std::ostream& os, const AppOptions& ao) {
+            if (ao.hasEpsilon) {
+                os << "Found 'epsilon': " << ao.epsilon << "\n";
+            }
+            if (ao.hasSteps) {
+                os << "Found 'steps': " << ao.steps << "\n";
+            }
+            if (ao.hasPasses) {
+                os << "Found 'passes': " << ao.passes << "\n";
+            }
+            if (ao.mergePoints) {
+                os << "Found 'mergePoints': true\n";
+            }
+            os << "File path = " << ao.filePath << "\n";
+            return os;
+        }
+
     };
 
     static bool parse_app_options(const std::vector<std::string>& rest, AppOptions& out)
@@ -38,6 +59,7 @@ namespace { // anonymous namespace for local-only functionality
                     std::cerr << "Missing value after " << a << "\n";
                     return false;
                 }
+                out.hasEpsilon = true;
                 out.epsilon = std::stod(rest[++i]);
             } else if (a == "--steps" || a == "-s") {
                 if (i + 1 >= rest.size()) {
@@ -45,6 +67,7 @@ namespace { // anonymous namespace for local-only functionality
                     return false;
                 }
                 out.steps = std::stoi(rest[++i]);
+                out.hasSteps = true;
                 if (out.steps < 1) {
                     out.steps = 1;
                 }
@@ -54,6 +77,7 @@ namespace { // anonymous namespace for local-only functionality
                     return false;
                 }
                 out.passes = std::stoi(rest[++i]);
+                out.hasPasses = true;
                 if (out.passes < 1) {
                     out.passes = 1;
                 }
@@ -97,8 +121,58 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    Field<int> intField(3, 0);
-    std::cout << "intField = " << intField << ", magSqr=" << intField.magSqr() << std::endl;
+    Log_Info("Command line options\n--------------------\n" << opt << "\n");
+
+    Log_Info("Reading " << opt.filePath);
+    std::ifstream iss(opt.filePath);
+    if (!iss.is_open()) {
+        Log_Error("Failed to open file '" << opt.filePath << "'");
+        return -1;
+    }
+
+    double readEpsilon = 0;
+    if (opt.mergePoints) {
+        if (opt.hasEpsilon) {
+            readEpsilon = opt.epsilon;
+        } else {
+            readEpsilon = 1e-9;
+            Log_Warn("'--mergePoints' specified but not '--epsilon' value provided.  Using 1e-9.");
+        }
+    }
+
+    // Read in from csv, throw away all unnecessary data, keep only pruned points.
+    Vector3Field pts;
+    {
+        Surface3 surface(iss, readEpsilon);
+        pts.swap(surface.points());
+    }
+    double chEpsilon = 0.0;
+    if (opt.hasEpsilon) {
+        chEpsilon = opt.epsilon;
+    }
+
+    // Create 3d convex hull to prune internal points
+    Vector3Field chPts;
+    IntField chVerts_unused;
+    std::vector<Face> chFaces_unused;
+
+    int nDims = ConvexHullTools::calculateConvexHull3d(
+        // Inputs
+        pts,
+        chEpsilon,
+
+        // Outputs
+        chPts,
+        chVerts_unused,
+        chFaces_unused
+    );
+
+    // Peak memory here
+    // Throw away unnecessary data
+    pts.clear();
+    chVerts_unused.clear();
+    chFaces_unused.clear();
+
 
 
     // 3) Input

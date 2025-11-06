@@ -1,7 +1,9 @@
 #pragma once
 
-#include "gaden/Vector3.hpp"
+#include "gaden/Axes.hpp"
 #include "gaden/Constants.hpp"
+#include "gaden/Vector3.hpp"
+#include "gaden/VectorNField.hpp"
 
 namespace gaden {
 
@@ -116,6 +118,20 @@ public:
     //     const std::vector<Vector3>& pts
     // );
 
+    // Tools
+
+    // Calculate axis-aligned boundBox from given points
+    static BoundBox calculateAxisAlignedBoundBox(const Vector3Field& ptsIn);
+
+    // Return the minimum BoundBox resulting from an iterative search through steps x steps
+    // variations on rotations, passes times
+    static BoundBox solveMinimumRotatedBoundBox(
+        // outputs
+        Axes& resultAxes, Vector3& resultRotations,
+
+        // inputs
+        const Vector3Field& pts, int steps, int passes, double epsilon
+    );
 
     friend std::ostream& operator<<(std::ostream& os, const BoundBox& c) {
         return os << "[" << c.minPt() << "->" << c.maxPt() << "]";

@@ -29,7 +29,7 @@ void gaden::PointCloudTools::mergePointsSubset(
     std::string mergedName = ptsIn.name() + "_merged";
     AutoMergingPointCloud amp(estimatedSize, mergeTol, mergedName);
     for (const Vector3& pt : ptsIn) {
-        mapOut.push_back(amp.append(pt));
+        mapOut.push_back(amp.append(pt).second);
     }
     ptsOut = std::move(amp).transfer();
 }
@@ -40,7 +40,7 @@ void gaden::PointCloudTools::projectPointsToPlane(
     double thetaIn,
     double phiIn,
     double toleranceIn,
-    Vector2Field& ptsOut
+    IndexedVector2Field& ptsOut
 ) {
     // 1) Build 3D orthonormal frame (u,v,w) from (thetaIn,phiIn)
     //  * thetaIn = heading (yaw) about +Z;
@@ -79,8 +79,8 @@ void gaden::PointCloudTools::projectPointsToPlane(
     // TODO - pull this out as a 2d point merge algorithm
     // 2D point merging - lexicographic(x,y) merge method to remove duplicates (if any)
     std::sort(ptsOut.begin(), ptsOut.end());
-    Vector2Field::const_iterator readIter = ptsOut.cbegin();
-    Vector2Field::iterator writeIter = ptsOut.begin();
+    IndexedVector2Field::const_iterator readIter = ptsOut.cbegin();
+    IndexedVector2Field::iterator writeIter = ptsOut.begin();
     if (writeIter == ptsOut.end() || ++writeIter == ptsOut.end()) {
         // There are zero or one points
         return;
@@ -91,9 +91,9 @@ void gaden::PointCloudTools::projectPointsToPlane(
     // readIter starts at index 2 (third element)
     double tolSqr = toleranceIn*toleranceIn;
     while (readIter != ptsOut.cend()) {
-        const Vector2& rd(*readIter);
-        Vector2& wr(*writeIter);
-        Vector2 delta = rd-wr;
+        const IndexedVector2& rd(*readIter);
+        IndexedVector2& wr(*writeIter);
+        IndexedVector2 delta = rd-wr;
         if (delta.magSqr() > tolSqr) {
             // Confirmed two points are too far apart to overlap
             wr = rd;

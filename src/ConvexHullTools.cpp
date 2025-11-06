@@ -324,7 +324,7 @@ int gaden::ConvexHullTools::calculateConvexHull3d(
     out.assign(verts.begin(), verts.end());
     std::sort(out.begin(), out.end());
 
-    // Cache actual hull points (for downstream sttoleranceIn)
+    // Cache actual hull points (for downstream steps)
     int nPts = out.size();
     ptsOut.clear();
     ptsOut.reserve(nPts);
@@ -337,10 +337,10 @@ int gaden::ConvexHullTools::calculateConvexHull3d(
 
 int gaden::ConvexHullTools::calculateConvexHull2d(
     // Inputs
-    const Vector2Field& ptsIn,
+    const IndexedVector2Field& ptsIn,
 
     // Outputs
-    Vector2Field& ptsOut,
+    IndexedVector2Field& ptsOut,
     IntField& verticesOut
 ) {
     int nPts = static_cast<int>(ptsIn.size());
@@ -371,11 +371,11 @@ int gaden::ConvexHullTools::calculateConvexHull2d(
     ptsOut.reserve(nA*2);
     for (int i = 0; i < nA; ++i) {
         while (ptsOut.size() >= 2) {
-            const Vector2 a = ptsOut[ptsOut.size()-2];
-            const Vector2 b = ptsOut[ptsOut.size()-1];
-            const Vector2 c = ptsIn[i];
-            const Vector2 ab = b - a;
-            const Vector2 ac = c - a;
+            const IndexedVector2 a = ptsOut[ptsOut.size()-2];
+            const IndexedVector2 b = ptsOut[ptsOut.size()-1];
+            const IndexedVector2 c = ptsIn[i];
+            const IndexedVector2 ab = b - a;
+            const IndexedVector2 ac = c - a;
             if (ab.crossProduct(ac) <= 0.0) {
                 // keep CCW turns; collinear -> pop to keep outermost
                 ptsOut.pop_back();
@@ -390,11 +390,11 @@ int gaden::ConvexHullTools::calculateConvexHull2d(
     const int lowerSize = static_cast<int>(ptsOut.size());
     for (int i = ptsIn.size()-2; i >= 0; --i) {
         while (ptsOut.size() > lowerSize) {
-            const Vector2 a = ptsOut[ptsOut.size()-2];
-            const Vector2 b = ptsOut[ptsOut.size()-1];
-            const Vector2 c = ptsIn[i];
-            const Vector2 ab = b - a;
-            const Vector2 ac = c - a;
+            const IndexedVector2 a = ptsOut[ptsOut.size()-2];
+            const IndexedVector2 b = ptsOut[ptsOut.size()-1];
+            const IndexedVector2 c = ptsIn[i];
+            const IndexedVector2 ab = b - a;
+            const IndexedVector2 ac = c - a;
             if (ab.crossProduct(ac) <= 0.0) {
                 ptsOut.pop_back();
             } else {
@@ -416,4 +416,169 @@ int gaden::ConvexHullTools::calculateConvexHull2d(
         verticesOut.push_back(ptsOut[i].idx());
     }
     return 2;
+}
+
+
+gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(
+    const Vector3& u,
+    const Vector3& v,
+    const std::vector<Vector3>& pts
+) {
+    MinRect mr;
+    mr.clear();
+    const int m = static_cast<int>(m_convexHull2dIndices.size());
+    if (m <= 0) {
+        mr.valid() = false;
+        return mr;
+    }
+    if (m == 1) {
+        mr.area() = 0.0;
+        mr.width() = 0.0;
+        mr.height() = 0.0;
+        mr.psi() = 0.0;
+        mr.parentEdge() = 0;
+        mr.valid() = false;
+        return mr;
+    }
+
+    // 1) Build the 2D polygon H2 by projecting hull vertices to (u,v)
+    std::vector<Vector2> H2;
+    H2.reserve(m);
+    for (int i = 0; i < m; ++i) {
+        const Vector3& p = pts[m_convexHull2dIndices[i]];
+        const double x = p.dotProduct(u);
+        const double y = p.dotProduct(v);
+        H2.emplace_back(x, y);
+    }
+
+    // 2) Handle the trivial 2-vertex case (a segment)
+    if (m == 2) {
+        const Vector2 e = H2[1] - H2[0];
+        const double lengthSqr = e.magSqr();
+        if (lengthSqr > 0.0) {
+            const double length = std::sqrt(lengthSqr);
+            mr.width() = length;
+            mr.height() = 0.0;
+            mr.area() = 0.0;
+            mr.psi() = std::atan2(e.y(), e.x());
+            mr.parentEdge() = 0;
+        } else {
+            mr.area() = 0.0;
+            mr.width() = mr.height() = 0.0;
+            mr.psi() = 0.0;
+            mr.parentEdge() = 0;
+        }
+        mr.valid() = false;
+        return mr;
+    }
+
+    // 3) Initial edge (i=0): find extreme indices by a single scan
+    int iUmax = 0, iUmin = 0, iVmax = 0, iVmin = 0;
+    {
+        Vector2 ue0;
+        Vector2 ve0;
+        MinRect::calculateEdgeFrame(0, m, H2, ue0, ve0);
+
+        double minU = H2[0].dotProduct(ue0);
+        double maxU = minU;
+        double minV = H2[0].dotProduct(ve0);
+        double maxV = minV;
+
+        for (int k = 1; k < m; ++k) {
+            const double su = H2[k].dotProduct(ue0);
+            const double sv = H2[k].dotProduct(ve0);
+            if (su < minU) {
+                minU = su; iUmin = k;
+            }
+            if (su > maxU) {
+                maxU = su; iUmax = k;
+            }
+            if (sv < minV) {
+                minV = sv; iVmin = k;
+            }
+            if (sv > maxV) {
+                maxV = sv; iVmax = k;
+            }
+        }
+
+        mr.width() = (maxU - minU);
+        mr.height() = (maxV - minV);
+        mr.area() = mr.width() * mr.height();
+        mr.psi() = std::atan2(ue0.y(), ue0.x());
+        mr.parentEdge() = 0;
+    }
+
+    // 4) Sweep all edges; advance support points while their projection improves.
+    for (int i = 1; i < m; ++i) {
+        Vector2 ue;
+        Vector2 ve;
+        MinRect::calculateEdgeFrame(i, m, H2, ue, ve);
+
+        // Advance each support index as long as the next vertex increases the projection.
+
+        // Umax (maximize dot with ue)
+        for (;;) {
+            const int nxt = (iUmax + 1) % m;
+            const double cur = H2[iUmax].dotProduct(ue);
+            const double nxtv= H2[nxt].dotProduct(ue);
+            if (nxtv > cur) {
+                iUmax = nxt;
+            } else {
+                break;
+            }
+        }
+        // Umin (minimize dot with ue)
+        for (;;) {
+            const int nxt = (iUmin + 1) % m;
+            const double cur = H2[iUmin].dotProduct(ue);
+            const double nxtv= H2[nxt].dotProduct(ue);
+            if (nxtv < cur) {
+                iUmin = nxt;
+            } else {
+                break;
+            }
+        }
+        // Vmax (maximize dot with ve)
+        for (;;) {
+            const int nxt = (iVmax + 1) % m;
+            const double cur = H2[iVmax].dotProduct(ve);
+            const double nxtv= H2[nxt ].dotProduct(ve);
+            if (nxtv > cur) {
+                iVmax = nxt;
+            } else {
+                break;
+            }
+        }
+        // Vmin (minimize dot with ve)
+        for (;;) {
+            const int nxt = (iVmin + 1) % m;
+            const double cur = H2[iVmin].dotProduct(ve);
+            const double nxtv= H2[nxt].dotProduct(ve);
+            if (nxtv < cur) {
+                iVmin = nxt;
+            } else {
+                break;
+            }
+        }
+
+        const double minU = H2[iUmin].dotProduct(ue);
+        const double maxU = H2[iUmax].dotProduct(ue);
+        const double minV = H2[iVmin].dotProduct(ve);
+        const double maxV = H2[iVmax].dotProduct(ve);
+
+        const double width = (maxU - minU);
+        const double height = (maxV - minV);
+        const double area = width * height;
+
+        if (area < mr.area()) {
+            mr.area() = area;
+            mr.width() = width;
+            mr.height() = height;
+            mr.parentEdge() = i;
+            // angle in the (u,v) plane
+            mr.psi() = std::atan2(ue.y(), ue.x());
+        }
+    }
+    mr.valid() = true;
+    return mr;
 }

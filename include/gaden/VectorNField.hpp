@@ -6,40 +6,51 @@
 
 #include "gaden/Logger.hpp"
 #include "gaden/ObjectBase.hpp"
-#include "gaden/Vector2.hpp"
 #include "gaden/Field.hpp"
+#include "gaden/IndexedVector2.hpp"
+#include "gaden/IndexedVector3.hpp"
+#include "gaden/Vector2.hpp"
+#include "gaden/Vector3.hpp"
 
 namespace gaden {
 
-// TODO combine Vector2Field and Vector3Field into a single template
-class Vector2Field: public ObjectBase {
+template<class Type> class VectorNField;
 
-    std::vector<Vector2> m_vec;
+typedef VectorNField<IndexedVector2> IndexedVector2Field;
+typedef VectorNField<IndexedVector3> IndexedVector3Field;
+typedef VectorNField<Vector2> Vector2Field;
+typedef VectorNField<Vector3> Vector3Field;
+
+
+template<class Type>
+class VectorNField: public ObjectBase {
+
+    std::vector<Type> m_vec;
 
 public:
 
     // Construct null
-    Vector2Field(std::string name=""): ObjectBase(name == "" ? "Vector2Field" : name)
+    VectorNField(std::string name=""): ObjectBase(name == "" ? "VectorNField" : name)
     {}
 
     // Construct given size
-    Vector2Field(int size, std::string name=""):
-        ObjectBase(name == "" ? "Vector2Field" : name),
+    VectorNField(int size, std::string name=""):
+        ObjectBase(name == "" ? "VectorNField" : name),
         m_vec(size)
     {}
 
     // Construct given size and initial element
-    Vector2Field(int size, Vector2 elem, std::string name=""):
-        ObjectBase(name == "" ? "Vector2Field" : name),
+    VectorNField(int size, Type elem, std::string name=""):
+        ObjectBase(name == "" ? "VectorNField" : name),
         m_vec(size, elem)
     {}
 
     // Construction from { ... }
-    Vector2Field(std::initializer_list<Vector2> ilist, std::string name = "")
+    VectorNField(std::initializer_list<Type> ilist, std::string name = "")
     : ObjectBase(name == "" ? "Field" : name), m_vec(ilist) {}
 
     // Assignment from { ... }
-    Vector2Field& operator=(std::initializer_list<Vector2> ilist) {
+    VectorNField& operator=(std::initializer_list<Type> ilist) {
         m_vec = ilist;
         return *this;
     }
@@ -48,18 +59,18 @@ public:
     // STL API
 
     // --- vector-like typedefs (handy for users & generic code)
-    using value_type             = Vector2;
-    using allocator_type         = std::allocator<Vector2>;
-    using size_type              = std::vector<Vector2>::size_type;
-    using difference_type        = std::vector<Vector2>::difference_type;
-    using reference              = Vector2&;
-    using const_reference        = const Vector2&;
-    using pointer                = Vector2*;
-    using const_pointer          = const Vector2*;
-    using iterator               = std::vector<Vector2>::iterator;
-    using const_iterator         = std::vector<Vector2>::const_iterator;
-    using reverse_iterator       = std::vector<Vector2>::reverse_iterator;
-    using const_reverse_iterator = std::vector<Vector2>::const_reverse_iterator;
+    using value_type             = Type;
+    using allocator_type         = std::allocator<Type>;
+    using size_type              = std::vector<Type>::size_type;
+    using difference_type        = std::vector<Type>::difference_type;
+    using reference              = Type&;
+    using const_reference        = const Type&;
+    using pointer                = Type*;
+    using const_pointer          = const Type*;
+    using iterator               = std::vector<Type>::iterator;
+    using const_iterator         = std::vector<Type>::const_iterator;
+    using reverse_iterator       = std::vector<Type>::reverse_iterator;
+    using const_reverse_iterator = std::vector<Type>::const_reverse_iterator;
 
     // --- iterators (enable range-for)
     iterator begin() noexcept { return m_vec.begin(); }
@@ -98,8 +109,8 @@ public:
     const_pointer data() const noexcept { return m_vec.data(); }
 
     // modifiers
-    void push_back(const Vector2& v) { m_vec.push_back(v); }
-    void push_back(Vector2&& v) { m_vec.push_back(std::move(v)); }
+    void push_back(const Type& v) { m_vec.push_back(v); }
+    void push_back(Type&& v) { m_vec.push_back(std::move(v)); }
     template<class... Args>
     reference emplace_back(Args&&... args) {
         m_vec.emplace_back(std::forward<Args>(args)...);
@@ -107,36 +118,36 @@ public:
     }
     void pop_back() { m_vec.pop_back(); }
     void resize(size_type n) { m_vec.resize(n); }
-    void resize(size_type n, const Vector2& v) { m_vec.resize(n, v); }
-    void swap(Vector2Field& other) noexcept { m_vec.swap(other.m_vec); }
+    void resize(size_type n, const Type& v) { m_vec.resize(n, v); }
+    void swap(VectorNField& other) noexcept { m_vec.swap(other.m_vec); }
 
     // Insert operations
-    iterator insert(const_iterator pos, const Vector2& value) {
+    iterator insert(const_iterator pos, const Type& value) {
         return m_vec.insert(pos, value);
     }
-    iterator insert(const_iterator pos, Vector2&& value) {
+    iterator insert(const_iterator pos, Type&& value) {
         return m_vec.insert(pos, std::move(value));
     }
-    iterator insert(const_iterator pos, size_type count, const Vector2& value) {
+    iterator insert(const_iterator pos, size_type count, const Type& value) {
         return m_vec.insert(pos, count, value);
     }
     template<class InputIt>
     iterator insert(const_iterator pos, InputIt first, InputIt last) {
         return m_vec.insert(pos, first, last);
     }
-    iterator insert(const_iterator pos, std::initializer_list<Vector2> ilist) {
+    iterator insert(const_iterator pos, std::initializer_list<Type> ilist) {
         return m_vec.insert(pos, ilist);
     }
 
     // Assign operations
-    void assign(size_type count, const Vector2& value) {
+    void assign(size_type count, const Type& value) {
         m_vec.assign(count, value);
     }
     template<class InputIt>
     void assign(InputIt first, InputIt last) {
         m_vec.assign(first, last);
     }
-    void assign(std::initializer_list<Vector2> ilist) {
+    void assign(std::initializer_list<Type> ilist) {
         m_vec.assign(ilist);
     }
 
@@ -152,8 +163,8 @@ public:
     // Management
 
     // Access underlying data
-    std::vector<Vector2>& vec() { return m_vec; }
-    const std::vector<Vector2>& vec() const { return m_vec; }
+    std::vector<Type>& vec() { return m_vec; }
+    const std::vector<Type>& vec() const { return m_vec; }
 
     // Clear all data
     void clear() {
@@ -163,11 +174,11 @@ public:
 
     // Unary operations
 
-    // Magnitude, squared x^2,y^2,z^2
+    // Magnitude, squared
     ScalarField magSqr() const {
         ScalarField result(size());
         ScalarField::iterator iter = result.begin();
-        Vector2Field::const_iterator citer = cbegin();
+        VectorNField::const_iterator citer = cbegin();
         for (;iter != result.end(); ++iter, ++citer) {
             (*iter) = citer->magSqr();
         }
@@ -178,7 +189,7 @@ public:
     ScalarField mag() const {
         ScalarField result(size());
         ScalarField::iterator iter = result.begin();
-        Vector2Field::const_iterator citer = cbegin();
+        VectorNField::const_iterator citer = cbegin();
         for (;iter != result.end(); ++iter, ++citer) {
             (*iter) = std::sqrt(citer->magSqr());
         }
@@ -188,7 +199,7 @@ public:
     // Normalise all elements of this field
     bool normalise() {
         bool success = true;
-        for (Vector2& elem : m_vec) {
+        for (Type& elem : m_vec) {
             success &= elem.normalise();
         }
         return success;
@@ -199,21 +210,21 @@ public:
     // * Scalars
 
     // field *= scalar
-    Vector2Field& operator*=(double val) {
-        for (Vector2& elem : m_vec) {
+    VectorNField& operator*=(double val) {
+        for (Type& elem : m_vec) {
             elem *= val;
         }
         return *this;
     }
     // field *= scalarfield
-    Vector2Field& operator*=(const ScalarField& sf) {
+    VectorNField& operator*=(const ScalarField& sf) {
         Assert(
             sf.size() == size(),
             "field sizes differ, sf=" + std::to_string(sf.size()) +
             ", this=" + std::to_string(size())
         );
         ScalarField::const_iterator citer = sf.cbegin();
-        Vector2Field::iterator iter = begin();
+        VectorNField::iterator iter = begin();
         for (;iter != end(); ++iter, ++citer) {
             (*iter) *= (*citer);
         }
@@ -221,21 +232,21 @@ public:
     }
 
     // field /= scalar
-    Vector2Field& operator/=(double val) {
-        for (Vector2& elem : m_vec) {
+    VectorNField& operator/=(double val) {
+        for (Type& elem : m_vec) {
             elem /= val;
         }
         return *this;
     }
     // field /= scalarfield
-    Vector2Field& operator/=(const ScalarField& sf) {
+    VectorNField& operator/=(const ScalarField& sf) {
         Assert(
             sf.size() == size(),
             "field sizes differ, sf=" + std::to_string(sf.size()) +
             ", this=" + std::to_string(size())
         );
         ScalarField::const_iterator citer = sf.cbegin();
-        Vector2Field::iterator iter = begin();
+        VectorNField::iterator iter = begin();
         for (;iter != end(); ++iter, ++citer) {
             (*iter) /= (*citer);
         }
@@ -245,21 +256,21 @@ public:
     // * Vectors
 
     // field += elem
-    Vector2Field& operator+=(const Vector2& val) {
-        for (Vector2& elem : m_vec) {
+    VectorNField& operator+=(const Type& val) {
+        for (Type& elem : m_vec) {
             elem += val;
         }
         return *this;
     }
     // field += field
-    Vector2Field& operator+=(const Vector2Field& vf) {
+    VectorNField& operator+=(const VectorNField& vf) {
         Assert(
             vf.size() == size(),
             "field sizes differ, vf=" + std::to_string(vf.size()) +
             ", this=" + std::to_string(size())
         );
-        Vector2Field::iterator iter;
-        Vector2Field::const_iterator citer;
+        VectorNField::iterator iter;
+        VectorNField::const_iterator citer;
         for (iter = m_vec.begin(), citer = vf.cbegin(); iter != m_vec.end(); ++iter, ++citer) {
             (*iter) += (*citer);
         }
@@ -267,21 +278,21 @@ public:
     }
 
     // field -= elem
-    Vector2Field& operator-=(const Vector2& val) {
-        for (Vector2& elem : m_vec) {
+    VectorNField& operator-=(const Type& val) {
+        for (Type& elem : m_vec) {
             elem -= val;
         }
         return *this;
     }
     // field -= field
-    Vector2Field& operator-=(const Vector2Field& vf) {
+    VectorNField& operator-=(const VectorNField& vf) {
         Assert(
             vf.size() == size(),
             "field sizes differ, vf=" + std::to_string(vf.size()) +
             ", this=" + std::to_string(size())
         );
-        Vector2Field::iterator iter;
-        Vector2Field::const_iterator citer;
+        VectorNField::iterator iter;
+        VectorNField::const_iterator citer;
         for (iter = m_vec.begin(), citer = vf.cbegin(); iter != m_vec.end(); ++iter, ++citer) {
             (*iter) -= (*citer);
         }
@@ -289,21 +300,21 @@ public:
     }
 
     // field + elem
-    Vector2Field operator+(const Vector2& vec) const {
-        Vector2Field result(*this);
+    VectorNField operator+(const Type& vec) const {
+        VectorNField result(*this);
         result += vec;
         return result;
     }
     // field + field
-    Vector2Field operator+(const Vector2Field& vf) {
+    VectorNField operator+(const VectorNField& vf) {
         Assert(
             vf.size() == size(),
             "field sizes differ, vf=" + std::to_string(vf.size()) +
             ", this=" + std::to_string(size())
         );
-        Vector2Field result(*this);
-        Vector2Field::iterator iter;
-        Vector2Field::const_iterator citer;
+        VectorNField result(*this);
+        VectorNField::iterator iter;
+        VectorNField::const_iterator citer;
         for (iter = result.begin(), citer = vf.cbegin(); iter != m_vec.end(); ++iter, ++citer) {
             (*iter) += (*citer);
         }
@@ -311,21 +322,21 @@ public:
     }
 
     // field - elem
-    Vector2Field operator-(const Vector2& vec) const {
-        Vector2Field result(*this);
+    VectorNField operator-(const Type& vec) const {
+        VectorNField result(*this);
         result -= vec;
         return result;
     }
     // field - field
-    Vector2Field operator-(const Vector2Field& vf) {
+    VectorNField operator-(const VectorNField& vf) {
         Assert(
             vf.size() == size(),
             "field sizes differ, vf=" + std::to_string(vf.size()) +
             ", this=" + std::to_string(size())
         );
-        Vector2Field result(*this);
-        Vector2Field::iterator iter;
-        Vector2Field::const_iterator citer;
+        VectorNField result(*this);
+        VectorNField::iterator iter;
+        VectorNField::const_iterator citer;
         for (iter = result.begin(), citer = vf.cbegin(); iter != m_vec.end(); ++iter, ++citer) {
             (*iter) -= (*citer);
         }
@@ -333,51 +344,49 @@ public:
     }
 
     // field * scalar
-    Vector2Field operator*(double scalar) const {
-        Vector2Field result(*this);
+    VectorNField operator*(double scalar) const {
+        VectorNField result(*this);
         result *= scalar;
         return result;
     }
 
     // field / scalar
-    Vector2Field operator/(double scalar) const {
-        Vector2Field result(*this);
+    VectorNField operator/(double scalar) const {
+        VectorNField result(*this);
         double invScalar = 1.0/scalar;
         result *= invScalar;
         return result;
     }
 
     // field x elem
-    ScalarField crossProduct(const Vector2& rhs) const {
-        ScalarField result(size());
-        ScalarField::iterator resIter = result.begin();
-        Vector2Field::const_iterator myIter = cbegin();
-        for (; resIter != result.end(); ++resIter, ++myIter) {
-            (*resIter) = myIter->crossProduct(rhs);
+    VectorNField crossProduct(const Type& rhs) const {
+        VectorNField result(*this);
+        for (Type& elem : result) {
+            elem = elem.crossProduct(rhs);
         }
         return result;
     }
     // field x field
-    ScalarField crossProduct(const Vector2Field& rhs) const {
+    VectorNField crossProduct(const VectorNField& rhs) const {
         Assert(
             rhs.size() == size(),
             "field sizes differ, rhs=" + std::to_string(rhs.size()) +
             ", this=" + std::to_string(size())
         );
-        ScalarField result(rhs.size());
-        ScalarField::iterator resIter = result.begin();
-        Vector2Field::const_iterator myIter = cbegin();
-        Vector2Field::const_iterator rhsIter = rhs.cbegin();
-        for (; resIter != result.end(); ++resIter, ++rhsIter, ++myIter) {
-            (*resIter) = myIter->crossProduct(*rhsIter);
+        VectorNField result(*this);
+        VectorNField::iterator iter;
+        VectorNField::const_iterator citer;
+        for (iter = result.begin(), citer = rhs.cbegin(); iter != m_vec.end(); ++iter, ++citer) {
+            Type& elem(*iter);
+            elem = elem.crossProduct(*citer);
         }
         return result;
     }
 
     // field • elem
-    ScalarField dotProduct(const Vector2& rhs) const {
+    ScalarField dotProduct(const Type& rhs) const {
         ScalarField result(size());
-        Vector2Field::const_iterator myIter = cbegin();
+        VectorNField::const_iterator myIter = cbegin();
         ScalarField::iterator resIter = result.begin();
         for (; myIter != cend(); ++myIter, ++resIter) {
             (*resIter) = myIter->dotProduct(rhs);
@@ -386,15 +395,15 @@ public:
     }
     // field • field
     // result = this • rhs
-    ScalarField dotProduct(const Vector2Field& rhs) const {
+    ScalarField dotProduct(const VectorNField& rhs) const {
         Assert(
             rhs.size() == size(),
             "field sizes differ, rhs=" + std::to_string(rhs.size()) +
             ", this=" + std::to_string(size())
         );
         ScalarField result(size());
-        Vector2Field::const_iterator rhsIter = rhs.cbegin();
-        Vector2Field::const_iterator myIter = cbegin();
+        VectorNField::const_iterator rhsIter = rhs.cbegin();
+        VectorNField::const_iterator myIter = cbegin();
         ScalarField::iterator resIter = result.begin();
         for (; myIter != cend(); ++rhsIter, ++myIter, ++resIter) {
             (*resIter) = myIter->dotProduct(*rhsIter);
@@ -412,7 +421,7 @@ public:
             writeHeader(os);
             os << '\n';
         }
-        for (const Vector2& elem : m_vec) {
+        for (const Type& elem : m_vec) {
             os << elem.toCsv() << std::endl;
         }
     }
@@ -422,7 +431,7 @@ public:
         std::string line;
         while (std::getline(is, line)) {
             std::istringstream lineIss(line);
-            readElem(lineIss);
+            static_cast<void>(readElem(lineIss));
         }
     }
 
@@ -443,21 +452,69 @@ public:
     }
 
     // Read in and append next element
-    void readElem(std::istream& is) {
-        Vector2 elem(is);
+    const Type& readElem(std::istream& is) {
+        Type elem(is);
         m_vec.push_back(elem);
+        return elem;
     }
 
     // Default stream behaviour: write out everything, header included
-    friend std::ostream& operator<<(std::ostream& os, const Vector2Field& f) {
+    friend std::ostream& operator<<(std::ostream& os, const VectorNField& f) {
         f.write(os, true);
         return os;
     }
 
-    friend std::istream& operator>>(std::istream& is, Vector2Field& f) {
+    friend std::istream& operator>>(std::istream& is, VectorNField& f) {
         f.read(is);
         return is;
     }
 };
+
+// Global functions
+
+// Convert supplied Vector2Field into an IndexedVector2Field with idx start at start, incrementing
+//  by step.
+IndexedVector2Field convertToIndexed(const Vector2Field& fldIn, int start=-1, int step=0) {
+    IndexedVector2Field fldOut(fldIn.name());
+    fldOut.reserve(fldIn.size());
+    int idx = start;
+    for (const Vector2& elemIn : fldIn) {
+        fldOut.emplace_back(elemIn, idx);
+        idx += step;
+    }
+    return fldOut;
+}
+// Convert supplied Vector3Field into an IndexedVector3Field with idx start at start, incrementing
+//  by step.
+IndexedVector3Field convertToIndexed(const Vector3Field& fldIn, int start=-1, int step=0) {
+    IndexedVector3Field fldOut(fldIn.name());
+    fldOut.reserve(fldIn.size());
+    int idx = start;
+    for (const Vector3& elemIn : fldIn) {
+        fldOut.emplace_back(elemIn, idx);
+        idx += step;
+    }
+    return fldOut;
+}
+
+// Remove indexing from Vecto2Field
+Vector2Field stripIndexing(const IndexedVector2Field& fldIn) {
+    Vector2Field fldOut(fldIn.name());
+    fldOut.reserve(fldIn.size());
+    for (const IndexedVector2& elemIn : fldIn) {
+        fldOut.push_back(Vector2(elemIn.x(), elemIn.y()));
+    }
+    return fldOut;
+}
+// Remove indexing from Vector3Field
+Vector3Field stripIndexing(const IndexedVector3Field& fldIn) {
+    Vector3Field fldOut(fldIn.name());
+    fldOut.reserve(fldIn.size());
+    for (const IndexedVector3& elemIn : fldIn) {
+        fldOut.push_back(Vector3(elemIn.x(), elemIn.y(), elemIn.z()));
+    }
+    return fldOut;
+}
+
 
 } // end namespace gaden

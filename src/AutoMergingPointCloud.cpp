@@ -50,7 +50,7 @@ gaden::AutoMergingPointCloud::AutoMergingPointCloud(
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-int gaden::AutoMergingPointCloud::append(const Vector3& pt)
+std::pair<bool, int> gaden::AutoMergingPointCloud::append(const Vector3& pt)
 {
     double msd = pt.magSqr();
     double scaledTol = 2*m_mergeTol*(abs(pt.x()) + abs(pt.y()) + abs(pt.z()));
@@ -71,7 +71,7 @@ int gaden::AutoMergingPointCloud::append(const Vector3& pt)
                 if ( (pt - m_points[candidateI]).magSqr() <= m_mergeTolSqr )
                 {
                     // Found match
-                    return candidateI;
+                    return std::pair<bool, int>(false, candidateI);
                 }
             }
         }
@@ -82,7 +82,7 @@ int gaden::AutoMergingPointCloud::append(const Vector3& pt)
     m_magSqrDist.push_back(msd);
     m_scaledTolSqr.push_back(scaledTol);
     addToBucketIndices(msd, newPtIndex);
-    return newPtIndex;
+    return std::pair<bool, int>(true, newPtIndex);
 }
 
 

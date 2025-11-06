@@ -3,16 +3,17 @@
 #include <vector>
 
 #include "gaden/Field.hpp"
+#include "gaden/PointCloudTools.hpp"
 #include "gaden/Tools.hpp"
-#include "gaden/Vector3Field.hpp"
+#include "gaden/VectorNField.hpp"
 
 namespace gaden {
 
 // A representation of a 3D surface.  For now, this just serves as a read/write and data container
 // for a supplied CSV file format, with header:
-// Face #,Point X,Point Y,Point Z,Normal X,Normal Y,Normal Z
+//  Face #,Point X,Point Y,Point Z,Normal X,Normal Y,Normal Z
+// Read will optionally, on-the-fly merge points based on user-supplied epsilon value.
 class Surface3: public ObjectBase {
-
 
     // Private data
     IntField m_faceNumber;
@@ -20,30 +21,11 @@ class Surface3: public ObjectBase {
     Vector3Field m_normals;
 
     // Private functions
-    bool read(std::istream& is) {
-        if (!is.good()) {
-            Log_Error("Cannot read from bad stream");
-            return false;
-        }
-        std::string buffer;
-        char comma;
-        while (std::getline(is, buffer)) {
-            Log_Debug4("Line=[" << buffer << "]");
-            std::istringstream lineIss(buffer);
-            char c = lineIss.peek();
-            if (!Tools::isNumber(c)) {
-                Log_Debug("First character is not a number, c=" << int(c));
-                continue;
-            }
 
-            m_faceNumber.readElem(is);
-            lineIss >> comma;
-            m_points.readElem(is);
-            lineIss >> comma;
-            m_normals.readElem(is);
-        }
-        return true;
-    }
+    // Read new values, i.e. faceNumbers, points, normals
+    //  If epsilon > 0, will skip any entries that are within that distance to a previously read
+    //  point.
+    bool read(std::istream& is, double epsilon=0.0);
 
 
 public:
@@ -57,13 +39,15 @@ public:
     {}
 
     // Construct from stream
-    Surface3(std::istream& is, std::string name=""):
+    //  epsilon enables point merging
+    //  name is for ObjectBase
+    Surface3(std::istream& is, double epsilon=0.0, std::string name=""):
         ObjectBase(name == "" ? "Surface3" : name),
         m_faceNumber("Face"),
         m_points("Point"),
         m_normals("Normal")
     {
-        read(is);
+        read(is, epsilon);
     }
 
 
@@ -118,7 +102,7 @@ public:
     }
 
     friend std::istream& operator>>(std::istream& is, Surface3& s) {
-        bool unused = s.read(is);
+        bool unused = s.read(is, 0.0);
         return is;
     }
 };

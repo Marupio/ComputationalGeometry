@@ -362,7 +362,7 @@ public:
         std::string line;
         while (std::getline(is, line)) {
             std::istringstream lineIss(line);
-            readElem(lineIss);
+            static_cast<void>(readElem(lineIss));
         }
     }
 
@@ -376,10 +376,11 @@ public:
     }
 
     // Read in and append next element
-    void readElem(std::istream& is) {
+    Type readElem(std::istream& is) {
         Type elem;
         is >> elem;
         m_vec.push_back(elem);
+        return elem;
     }
 
     // Default stream behaviour: write out everything, header included

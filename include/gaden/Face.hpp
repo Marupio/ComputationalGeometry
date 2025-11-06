@@ -3,8 +3,7 @@
 #include <vector>
 
 #include "gaden/Constants.hpp"
-#include "gaden/Vector3.hpp"
-#include "gaden/Vector3Field.hpp"
+#include "gaden/VectorNField.hpp"
 
 namespace gaden {
 

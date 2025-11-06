@@ -1,7 +1,6 @@
 #pragma once
 
-#include "gaden/Vector3Field.hpp"
-#include "gaden/Vector2Field.hpp"
+#include "gaden/VectorNField.hpp"
 
 namespace gaden {
 
@@ -49,7 +48,7 @@ public:
         double thetaIn,
         double phiIn,
         double toleranceIn,
-        Vector2Field& ptsOut
+        IndexedVector2Field& ptsOut
     );
 };
 

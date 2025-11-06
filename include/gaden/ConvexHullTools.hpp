@@ -2,9 +2,8 @@
 
 #include "gaden/Edge.hpp"
 #include "gaden/Face.hpp"
-#include "gaden/Vector2Field.hpp"
-#include "gaden/Vector3Field.hpp"
-
+#include "gaden/MinRect.hpp"
+#include "gaden/VectorNField.hpp"
 
 namespace gaden {
 
@@ -27,9 +26,6 @@ public:
         std::vector<Face> chFacesOut
     );
 
-    // Project to plane at angle theta (heading), phi (declination) and calculate convex hull
-    static bool calculateConvexHull2d(const Vector3Field& pts, double theta, double phi);
-
     // Create a 2D convex hull for the supplied ptsIn.  Outputs:
     //  * ptsOut - points incident to the output hull
     //  * verticesOut - indices of ptsOut in the original ptsIn
@@ -38,13 +34,19 @@ public:
     //  0   - a single point
     //  1   - a line
     //  2   - a polygon in 2 dimensions
-    int calculateConvexHull2d(
+    static int calculateConvexHull2d(
         // Inputs
-        const Vector2Field& ptsIn,
+        const IndexedVector2Field& ptsIn,
 
         // Outputs
-        Vector2Field& ptsOut,
+        IndexedVector2Field& ptsOut,
         IntField& verticesOut
+    );
+
+    static MinRect rotatingCalipers(
+        const Vector3& u,
+        const Vector3& v,
+        const std::vector<Vector3>& pts
     );
 
 };

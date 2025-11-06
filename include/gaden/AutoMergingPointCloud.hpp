@@ -2,9 +2,9 @@
 
 #include <vector>
 #include <unordered_map>
+#include <utility>
 
-#include "gaden/Vector3.hpp"
-#include "gaden/Vector3Field.hpp"
+#include "gaden/VectorNField.hpp"
 #include "gaden/Field.hpp"
 
 namespace gaden {
@@ -107,9 +107,8 @@ public:
         // Modify
 
             //- Append new point to list, merging as required
-            //  Returns point index after merging
-            int append(const Vector3&);
-
+            //  Returns <new point, point index> after merging
+            std::pair<bool, int> append(const Vector3&);
 
             // Hand over ownership of data, invalidates in-class data
             Vector3Field transfer() && noexcept {
