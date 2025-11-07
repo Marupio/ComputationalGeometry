@@ -103,18 +103,14 @@ gaden::BoundBox gaden::BoundBox::solveMinimumRotatedBoundBox(
                     continue;
                 }
 
-                static bool rotatingCalipers(
-                    const Vector3& u,
-                    const Vector3& v,
-                    const std::vector<Vector3>& pts
-                );
-
                 // *** Solve optimal in-plane roll psi using rotating calipers over projected hull
-                if (!solvePsiOnProjectedHull(u, v, pts)) {
-                    // m_optimalRect still carries results for degenerate small hulls; we can proceed
-                }
+                // Gives us psi and the minimum rectangle (2d)
+                MinRect optimalRect(ConvexHullTools::rotatingCalipers(u, v, projPts));
+                // if (!mr.valid()) {
+                //  // optimalRect still carries results for degenerate small hulls; proceed
+                // }
 
-                const double psi = m_optimalRect.psi();
+                const double psi = optimalRect.psi();
 
                 // Rotate (u, v) by psi around w to align with rectangle sides: (u', v')
                 const double cps = std::cos(psi);
@@ -161,10 +157,10 @@ gaden::BoundBox gaden::BoundBox::solveMinimumRotatedBoundBox(
                     }
                 }
 
-                // matches m_optimalRect.width() numerically
+                // matches optimalRect.width() numerically
                 const double width  = (maxU - minU);
 
-                // matches m_optimalRect.height() numerically
+                // matches optimalRect.height() numerically
                 const double height = (maxV - minV);
                 const double depth  = (maxW - minW);
                 const double volume = width * height * depth;
@@ -197,8 +193,7 @@ gaden::BoundBox gaden::BoundBox::solveMinimumRotatedBoundBox(
         }
     }
 
-    resultBb = bestLocalBb;
     resultAxes = bestAxes;
     resultRotations = Vector3(bestTheta, bestPhi, bestPsi);
-    return true;
+    return bestLocalBb;
 }

@@ -46,7 +46,7 @@ public:
     static MinRect rotatingCalipers(
         const Vector3& u,
         const Vector3& v,
-        const std::vector<Vector3>& pts
+        const IndexedVector2Field& ptsIn
     );
 
 };

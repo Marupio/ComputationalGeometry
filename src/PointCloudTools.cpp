@@ -42,7 +42,7 @@ void gaden::PointCloudTools::projectPointsToPlane(
     double toleranceIn,
     IndexedVector2Field& ptsOut
 ) {
-    // 1) Build 3D orthonormal frame (u,v,w) from (thetaIn,phiIn)
+    // Build 3D orthonormal frame (u,v,w) from (thetaIn,phiIn)
     //  * thetaIn = heading (yaw) about +Z;
     //  * phiIn = declination from XY plane (positive looks "up" toward +Z)
     // Unit look-direction:

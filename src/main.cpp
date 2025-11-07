@@ -4,10 +4,11 @@
 #include <string>
 #include <vector>
 
-#include "gaden/Surface3.hpp"
+#include "gaden/BoundBox.hpp"
 #include "gaden/ConvexHullTools.hpp"
 #include "gaden/Logger.hpp"
 #include "gaden/LoggerConfigurator.hpp"
+#include "gaden/Surface3.hpp"
 #include "gaden/version.hpp"
 
 using namespace gaden;
@@ -31,12 +32,18 @@ namespace { // anonymous namespace for local-only functionality
         friend std::ostream& operator<<(std::ostream& os, const AppOptions& ao) {
             if (ao.hasEpsilon) {
                 os << "Found 'epsilon': " << ao.epsilon << "\n";
+            } else {
+                os << "No 'epsilon' option found, using default: " << ao.epsilon << "\n";
             }
             if (ao.hasSteps) {
                 os << "Found 'steps': " << ao.steps << "\n";
+            } else {
+                os << "No 'steps' option found, using default: " << ao.steps << "\n";
             }
             if (ao.hasPasses) {
                 os << "Found 'passes': " << ao.passes << "\n";
+            } else {
+                os << "No 'passes' option found, using default: " << ao.passes << "\n";
             }
             if (ao.mergePoints) {
                 os << "Found 'mergePoints': true\n";
@@ -132,12 +139,7 @@ int main(int argc, char** argv)
 
     double readEpsilon = 0;
     if (opt.mergePoints) {
-        if (opt.hasEpsilon) {
-            readEpsilon = opt.epsilon;
-        } else {
-            readEpsilon = 1e-9;
-            Log_Warn("'--mergePoints' specified but not '--epsilon' value provided.  Using 1e-9.");
-        }
+        readEpsilon = opt.epsilon;
     }
 
     // Read in from csv, throw away all unnecessary data, keep only pruned points.
@@ -146,10 +148,7 @@ int main(int argc, char** argv)
         Surface3 surface(iss, readEpsilon);
         pts.swap(surface.points());
     }
-    double chEpsilon = 0.0;
-    if (opt.hasEpsilon) {
-        chEpsilon = opt.epsilon;
-    }
+    double chEpsilon = opt.epsilon;
 
     // Create 3d convex hull to prune internal points
     Vector3Field chPts;
@@ -173,9 +172,23 @@ int main(int argc, char** argv)
     chVerts_unused.clear();
     chFaces_unused.clear();
 
+    Axes resultAxes;
+    Vector3 resultRotations;
+    BoundBox minBb = BoundBox::solveMinimumRotatedBoundBox(
+        // outputs
+        resultAxes, resultRotations,
 
+        // inputs
+        chPts, opt.steps, opt.passes, opt.epsilon
+    );
 
-    // 3) Input
+    Log_Info(""
+        << "Done calculations.  Results:\n"
+        << "BoundBox : " << minBb << "\n"
+        << "Axes     : " << resultAxes << "\n"
+        << "Rotations: " << resultRotations
+    );
+
     std::cout << "\nDone.\n";
     return 0;
 }

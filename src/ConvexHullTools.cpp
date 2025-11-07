@@ -422,16 +422,17 @@ int gaden::ConvexHullTools::calculateConvexHull2d(
 gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(
     const Vector3& u,
     const Vector3& v,
-    const std::vector<Vector3>& pts
+    const IndexedVector2Field& ptsIn
 ) {
     MinRect mr;
     mr.clear();
-    const int m = static_cast<int>(m_convexHull2dIndices.size());
-    if (m <= 0) {
+    const int nPts = static_cast<int>(ptsIn.size());
+    if (nPts <= 0) {
         mr.valid() = false;
         return mr;
     }
-    if (m == 1) {
+    // Handle trivial cases one or two points
+    if (nPts == 1) {
         mr.area() = 0.0;
         mr.width() = 0.0;
         mr.height() = 0.0;
@@ -439,21 +440,8 @@ gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(
         mr.parentEdge() = 0;
         mr.valid() = false;
         return mr;
-    }
-
-    // 1) Build the 2D polygon H2 by projecting hull vertices to (u,v)
-    std::vector<Vector2> H2;
-    H2.reserve(m);
-    for (int i = 0; i < m; ++i) {
-        const Vector3& p = pts[m_convexHull2dIndices[i]];
-        const double x = p.dotProduct(u);
-        const double y = p.dotProduct(v);
-        H2.emplace_back(x, y);
-    }
-
-    // 2) Handle the trivial 2-vertex case (a segment)
-    if (m == 2) {
-        const Vector2 e = H2[1] - H2[0];
+    } else if (nPts == 2) {
+        const IndexedVector2 e = ptsIn[1] - ptsIn[0];
         const double lengthSqr = e.magSqr();
         if (lengthSqr > 0.0) {
             const double length = std::sqrt(lengthSqr);
@@ -472,21 +460,21 @@ gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(
         return mr;
     }
 
-    // 3) Initial edge (i=0): find extreme indices by a single scan
+    // Initial edge (i=0): find extreme indices by a single scan
     int iUmax = 0, iUmin = 0, iVmax = 0, iVmin = 0;
     {
-        Vector2 ue0;
-        Vector2 ve0;
-        MinRect::calculateEdgeFrame(0, m, H2, ue0, ve0);
+        IndexedVector2 ue0;
+        IndexedVector2 ve0;
+        MinRect::calculateEdgeFrame(0, nPts, ptsIn, ue0, ve0);
 
-        double minU = H2[0].dotProduct(ue0);
+        double minU = ptsIn[0].dotProduct(ue0);
         double maxU = minU;
-        double minV = H2[0].dotProduct(ve0);
+        double minV = ptsIn[0].dotProduct(ve0);
         double maxV = minV;
 
-        for (int k = 1; k < m; ++k) {
-            const double su = H2[k].dotProduct(ue0);
-            const double sv = H2[k].dotProduct(ve0);
+        for (int k = 1; k < nPts; ++k) {
+            const double su = ptsIn[k].dotProduct(ue0);
+            const double sv = ptsIn[k].dotProduct(ve0);
             if (su < minU) {
                 minU = su; iUmin = k;
             }
@@ -508,19 +496,19 @@ gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(
         mr.parentEdge() = 0;
     }
 
-    // 4) Sweep all edges; advance support points while their projection improves.
-    for (int i = 1; i < m; ++i) {
-        Vector2 ue;
-        Vector2 ve;
-        MinRect::calculateEdgeFrame(i, m, H2, ue, ve);
+    // Sweep all edges; advance support points while their projection improves.
+    for (int i = 1; i < nPts; ++i) {
+        IndexedVector2 ue;
+        IndexedVector2 ve;
+        MinRect::calculateEdgeFrame(i, nPts, ptsIn, ue, ve);
 
         // Advance each support index as long as the next vertex increases the projection.
 
         // Umax (maximize dot with ue)
         for (;;) {
-            const int nxt = (iUmax + 1) % m;
-            const double cur = H2[iUmax].dotProduct(ue);
-            const double nxtv= H2[nxt].dotProduct(ue);
+            const int nxt = (iUmax + 1) % nPts;
+            const double cur = ptsIn[iUmax].dotProduct(ue);
+            const double nxtv= ptsIn[nxt].dotProduct(ue);
             if (nxtv > cur) {
                 iUmax = nxt;
             } else {
@@ -529,9 +517,9 @@ gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(
         }
         // Umin (minimize dot with ue)
         for (;;) {
-            const int nxt = (iUmin + 1) % m;
-            const double cur = H2[iUmin].dotProduct(ue);
-            const double nxtv= H2[nxt].dotProduct(ue);
+            const int nxt = (iUmin + 1) % nPts;
+            const double cur = ptsIn[iUmin].dotProduct(ue);
+            const double nxtv= ptsIn[nxt].dotProduct(ue);
             if (nxtv < cur) {
                 iUmin = nxt;
             } else {
@@ -540,9 +528,9 @@ gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(
         }
         // Vmax (maximize dot with ve)
         for (;;) {
-            const int nxt = (iVmax + 1) % m;
-            const double cur = H2[iVmax].dotProduct(ve);
-            const double nxtv= H2[nxt ].dotProduct(ve);
+            const int nxt = (iVmax + 1) % nPts;
+            const double cur = ptsIn[iVmax].dotProduct(ve);
+            const double nxtv= ptsIn[nxt ].dotProduct(ve);
             if (nxtv > cur) {
                 iVmax = nxt;
             } else {
@@ -551,9 +539,9 @@ gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(
         }
         // Vmin (minimize dot with ve)
         for (;;) {
-            const int nxt = (iVmin + 1) % m;
-            const double cur = H2[iVmin].dotProduct(ve);
-            const double nxtv= H2[nxt].dotProduct(ve);
+            const int nxt = (iVmin + 1) % nPts;
+            const double cur = ptsIn[iVmin].dotProduct(ve);
+            const double nxtv= ptsIn[nxt].dotProduct(ve);
             if (nxtv < cur) {
                 iVmin = nxt;
             } else {
@@ -561,10 +549,10 @@ gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(
             }
         }
 
-        const double minU = H2[iUmin].dotProduct(ue);
-        const double maxU = H2[iUmax].dotProduct(ue);
-        const double minV = H2[iVmin].dotProduct(ve);
-        const double maxV = H2[iVmax].dotProduct(ve);
+        const double minU = ptsIn[iUmin].dotProduct(ue);
+        const double maxU = ptsIn[iUmax].dotProduct(ue);
+        const double minV = ptsIn[iVmin].dotProduct(ve);
+        const double maxV = ptsIn[iVmax].dotProduct(ve);
 
         const double width = (maxU - minU);
         const double height = (maxV - minV);

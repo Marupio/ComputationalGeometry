@@ -67,7 +67,7 @@ public:
     // Calculate axial edges from the i'th edge in a planar polygon, return as output parameters
     static void calculateEdgeFrame(
         // inputs
-        int i, int hullSize, const std::vector<IndexedVector2>& polygon,
+        int i, int hullSize, const IndexedVector2Field& polygon,
 
         // outputs
         IndexedVector2& ue, IndexedVector2& ve
