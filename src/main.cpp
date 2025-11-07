@@ -110,7 +110,7 @@ int main(int argc, char** argv)
     //  Supports wide variety of flags, debug level, json-configurable input, etc.
     //  Remainder falls through to 'rest()'
     gaden::cli::LoggerConfigurator cfg("gaden-sandbox", "0.1.0", "Gaden Sandbox App");
-    if (!cfg.process(argc, argv)) {
+    if (!cfg.process(argc, argv, gaden::LogLevel::Info)) {
         // --help/--version/--info etc. handled inside; exiting quietly is fine.
         return 0;
     }
@@ -155,6 +155,13 @@ int main(int argc, char** argv)
     IntField chVerts_unused;
     std::vector<Face> chFaces_unused;
 
+    int nPts = static_cast<int>(pts.size());
+    Log_Info(""
+        << "Calculating 3D convex hull from " << nPts << " unique points (after merging)...\n"
+        << "This identifies critical points, allowing the application to reduce the size of the \n"
+        << "problem, improving CPU."
+    );
+
     int nDims = ConvexHullTools::calculateConvexHull3d(
         // Inputs
         pts,
@@ -164,6 +171,13 @@ int main(int argc, char** argv)
         chPts,
         chVerts_unused,
         chFaces_unused
+    );
+
+    const int nChPts = static_cast<int>(chPts.size());
+    Log_Info(""
+        << "Found a convex hull enclosing a " << ConvexHullTools::nDimsToWord(nDims)
+        << ", formed by " << nChPts << " critical points, a further reduction of "
+        << (nPts - nChPts) << " points"
     );
 
     // Peak memory here

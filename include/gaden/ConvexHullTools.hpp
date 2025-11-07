@@ -43,11 +43,36 @@ public:
         IntField& verticesOut
     );
 
-    static MinRect rotatingCalipers(
-        const Vector3& u,
-        const Vector3& v,
-        const IndexedVector2Field& ptsIn
-    );
+    // Converts the nDimensions returned by convex hull calculation functions into a user-facing
+    // word
+    static std::string nDimsToWord(int nDims) {
+        switch (nDims) {
+            case -1:
+                return "Nothing";
+            case 0:
+                return "Point";
+            case 1:
+                return "Line";
+            case 2:
+                return "Area";
+            case 3:
+                return "Volume";
+            default:
+                return "Error";
+        }
+    }
+
+    // Given a 2d point cloud, identify the edge and associated angle of rotation that gives the
+    // minimum enclosing rectangle. Rotating calipers navigates the outer edges of the point cloud
+    // and calculates the size of the bound box aligned to that edge. Returns MinRect, a POD class
+    // designed with this function in mind, containing:
+    //  * valid (bool)     - false if point cloud does not define a 2d area
+    //  * area (double)    - area of the associated bound box
+    //  * psi (double)     - rotation angle (angle of associated edge with horizontal)
+    //  * width (double)   - 'horizontal' aligned dimension of the minimum rectangle
+    //  * height (double)  - 'vertical' aligned dimension of the minimum rectangle
+    //  * parentEdge (int) - associated outer edge that resulted in the minimum rectangle
+    static MinRect rotatingCalipers(const IndexedVector2Field& ptsIn);
 
 };
 

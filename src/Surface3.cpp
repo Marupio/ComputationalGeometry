@@ -13,15 +13,20 @@ bool gaden::Surface3::read(std::istream& is, double epsilon) {
     std::string buffer;
     char comma;
     BoundBox bb;
+    int nMerged = 0;
+    int nLines = 0;
+    int nValidLines = 0;
     if (epsilon <= 0.0) {
         while (std::getline(is, buffer)) {
             Log_Debug4("Line=[" << buffer << "]");
+            ++nLines;
             std::istringstream lineIss(buffer);
             char c = lineIss.peek();
             if (!Tools::isNumber(c)) {
                 Log_Debug("First character is not a number, c=" << int(c));
                 continue;
             }
+            ++nValidLines;
             m_faceNumber.readElem(lineIss);
             lineIss >> comma;
             m_points.readElem(lineIss);
@@ -33,12 +38,14 @@ bool gaden::Surface3::read(std::istream& is, double epsilon) {
         AutoMergingPointCloud amp(0, epsilon, name());
         while (std::getline(is, buffer)) {
             Log_Debug4("Line=[" << buffer << "]");
+            ++nLines;
             std::istringstream lineIss(buffer);
             char c = lineIss.peek();
             if (!Tools::isNumber(c)) {
                 Log_Debug("First character is not a number, c=" << int(c));
                 continue;
             }
+            ++nValidLines;
             int fn;
             Vector3 pt;
             Vector3 nm;
@@ -51,6 +58,7 @@ bool gaden::Surface3::read(std::istream& is, double epsilon) {
             std::pair<bool, int> newPtAndId = amp.append(pt);
             if (!newPtAndId.first) {
                 // Point merged, skip
+                ++nMerged;
                 continue;
             }
             // faceNumber - fn?  or newPtAndId.second?
@@ -61,6 +69,12 @@ bool gaden::Surface3::read(std::istream& is, double epsilon) {
         }
         m_points = std::move(amp).transfer();
     }
-    Log_Info("Read " << m_points.size() << " points with bounds " << bb);
+    Log_Info(""
+        << "Read results:\n"
+        << "\tLines         : " << nLines << "\n"
+        << "\tValid points  : " << nValidLines << "\n"
+        << "\tMerged points : " << nMerged << "\n"
+        << "\tUnique points : " << m_points.size()
+    );
     return true;
 }

@@ -105,7 +105,7 @@ gaden::BoundBox gaden::BoundBox::solveMinimumRotatedBoundBox(
 
                 // *** Solve optimal in-plane roll psi using rotating calipers over projected hull
                 // Gives us psi and the minimum rectangle (2d)
-                MinRect optimalRect(ConvexHullTools::rotatingCalipers(u, v, projPts));
+                MinRect optimalRect(ConvexHullTools::rotatingCalipers(projPts));
                 // if (!mr.valid()) {
                 //  // optimalRect still carries results for degenerate small hulls; proceed
                 // }

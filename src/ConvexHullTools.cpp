@@ -419,11 +419,7 @@ int gaden::ConvexHullTools::calculateConvexHull2d(
 }
 
 
-gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(
-    const Vector3& u,
-    const Vector3& v,
-    const IndexedVector2Field& ptsIn
-) {
+gaden::MinRect gaden::ConvexHullTools::rotatingCalipers(const IndexedVector2Field& ptsIn) {
     MinRect mr;
     mr.clear();
     const int nPts = static_cast<int>(ptsIn.size());

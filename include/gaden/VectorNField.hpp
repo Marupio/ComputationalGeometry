@@ -452,7 +452,7 @@ public:
     }
 
     // Read in and append next element
-    const Type& readElem(std::istream& is) {
+    Type readElem(std::istream& is) {
         Type elem(is);
         m_vec.push_back(elem);
         return elem;
@@ -474,47 +474,17 @@ public:
 
 // Convert supplied Vector2Field into an IndexedVector2Field with idx start at start, incrementing
 //  by step.
-IndexedVector2Field convertToIndexed(const Vector2Field& fldIn, int start=-1, int step=0) {
-    IndexedVector2Field fldOut(fldIn.name());
-    fldOut.reserve(fldIn.size());
-    int idx = start;
-    for (const Vector2& elemIn : fldIn) {
-        fldOut.emplace_back(elemIn, idx);
-        idx += step;
-    }
-    return fldOut;
-}
+IndexedVector2Field convertToIndexed(const Vector2Field& fldIn, int start=-1, int step=0);
+
 // Convert supplied Vector3Field into an IndexedVector3Field with idx start at start, incrementing
 //  by step.
-IndexedVector3Field convertToIndexed(const Vector3Field& fldIn, int start=-1, int step=0) {
-    IndexedVector3Field fldOut(fldIn.name());
-    fldOut.reserve(fldIn.size());
-    int idx = start;
-    for (const Vector3& elemIn : fldIn) {
-        fldOut.emplace_back(elemIn, idx);
-        idx += step;
-    }
-    return fldOut;
-}
+IndexedVector3Field convertToIndexed(const Vector3Field& fldIn, int start=-1, int step=0);
 
 // Remove indexing from Vecto2Field
-Vector2Field stripIndexing(const IndexedVector2Field& fldIn) {
-    Vector2Field fldOut(fldIn.name());
-    fldOut.reserve(fldIn.size());
-    for (const IndexedVector2& elemIn : fldIn) {
-        fldOut.push_back(Vector2(elemIn.x(), elemIn.y()));
-    }
-    return fldOut;
-}
+Vector2Field stripIndexing(const IndexedVector2Field& fldIn);
+
 // Remove indexing from Vector3Field
-Vector3Field stripIndexing(const IndexedVector3Field& fldIn) {
-    Vector3Field fldOut(fldIn.name());
-    fldOut.reserve(fldIn.size());
-    for (const IndexedVector3& elemIn : fldIn) {
-        fldOut.push_back(Vector3(elemIn.x(), elemIn.y(), elemIn.z()));
-    }
-    return fldOut;
-}
+Vector3Field stripIndexing(const IndexedVector3Field& fldIn);
 
 
 } // end namespace gaden

@@ -102,7 +102,7 @@ public:
     }
 
     friend std::istream& operator>>(std::istream& is, Surface3& s) {
-        bool unused = s.read(is, 0.0);
+        static_cast<void>(s.read(is, 0.0));
         return is;
     }
 };

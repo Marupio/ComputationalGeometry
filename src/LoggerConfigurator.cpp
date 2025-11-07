@@ -159,7 +159,7 @@ bool LoggerConfigurator::applyJsonIfProvided() {
     return true;
 }
 
-bool LoggerConfigurator::process(int argc, char** argv) {
+bool LoggerConfigurator::process(int argc, char** argv, LogLevel defaultLogLevel) {
     using gaden::Logger;
     Logger& log = Logger::instance();
 
@@ -230,6 +230,9 @@ bool LoggerConfigurator::process(int argc, char** argv) {
                       << "Allowed: " << allowedLevelsList() << "\n";
             return false;
         }
+    } else {
+        // Apply default log level
+        log.setLevel(defaultLogLevel);
     }
 
     if (m_noLogFile) {

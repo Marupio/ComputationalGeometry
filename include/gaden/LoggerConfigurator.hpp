@@ -22,7 +22,7 @@ public:
         m_appDescription(std::move(appDescription))
     {}
 
-    bool process(int argc, char** argv);
+    bool process(int argc, char** argv, gaden::LogLevel defaultLogLevel);
 
     std::optional<std::string> jsonPath() const { return m_jsonPath; }
     const std::vector<std::string>& rest() const { return m_rest; }

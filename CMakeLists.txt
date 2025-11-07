@@ -67,7 +67,9 @@ add_executable(sandbox
     src/LoggerConfigurator.cpp
     src/main.cpp
     src/PointCloudTools.cpp
+    src/Surface3.cpp
     src/Tools.cpp
+    src/VectorNField.cpp
 )
 
 # Headers (public include path)
